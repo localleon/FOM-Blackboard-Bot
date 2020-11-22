@@ -1,10 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	"net/http/httputil"
+	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"strings"
@@ -12,29 +13,44 @@ import (
 
 var client *http.Client
 
+type blackboardRes struct {
+	Status      int    `json:"status"`
+	HTML        string `json:"html"`
+	NewElements int    `json:"newelements"`
+	TotalRows   int    `json:"total_rows"`
+}
+
 func main() {
 	log.Println("Starting Application")
-	client = &http.Client{}
+	jar, _ := cookiejar.New(nil)
+	client = &http.Client{
+		Jar: jar,
+	}
 
 	// Authentication
 	username := os.Getenv("FOM_USER")
 	password := os.Getenv("FOM_PWD")
+	fmt.Println("LoginData: ", username, password)
 	// Authenticate Session
 	context := getLoginContext()
 	session := getLoginCookie(username, password, context)
-
-	return
+	s
 	// Parsing
-	fmt.Println("Working with the following cookies:", session)
-	getDashboardBlackboard(session)
+	news := getDashboardBlackboard(session)
+	parseBlackBoardData(news)
 }
 
-func getDashboardBlackboard(s []*http.Cookie) {
+func parseBlackBoardData(d blackboardRes) {
+	if d.Status == 200 {
+		fmt.Println(d.HTML)
+	}
+}
+
+func getDashboardBlackboard(s []*http.Cookie) blackboardRes {
 	endpoint := "https://campus.bildungscentrum.de"
-	//params := "/nfcampus/startapi/blackboard"
-	params := "/nfcampus/Node.do?n=5003"
+	params := "/nfcampus/startapi/blackboard"
+	//params := "/nfcampus/Node.do?n=5003"
 	url := endpoint + params
-	fmt.Println("Connecting to ", url)
 
 	// Prepare new HTTP request
 	request, err := http.NewRequest("GET", url, nil)
@@ -50,31 +66,35 @@ func getDashboardBlackboard(s []*http.Cookie) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	fmt.Println(response.Status)
-	// text, _ := httputil.DumpResponse(response, true)
-	// fmt.Println(string(text))
+
+	if response.StatusCode == 200 {
+		data := blackboardRes{}
+		json.NewDecoder(response.Body).Decode(&data)
+		return data
+	} else {
+		fmt.Println("Error while getting Dashboard", response.Status)
+		return blackboardRes{Status: response.StatusCode}
+	}
 }
 
 // getLoginCookie creates a Session Cookie with FOM-OC Login.do Endpoint
 func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 	log.Println("Authenticating Session.....")
-	// Make HTTP GET request
-	// params := "crt=19453&assl=&iehack=%C3%A2%CB%9C%C2%A0&quelle=LoginForm-BCW&i=bcw"
-	// body := params + "&name=" + user + "&password=" + pwd
-	// fmt.Println("Composing body with value:", body)
-	//
-	// fmt.Println("Connecting to ", url)
 
-	apiUrl := "https://campus.bildungscentrum.de"
+	apiURL := "https://campus.bildungscentrum.de"
 	resource := "/nfcampus/Login.do"
+	// Emulate Form Data of Login Page
 	data := url.Values{}
 	data.Set("crt", "19453")
+	data.Set("assl", "")
+	data.Set("iehack", "%C3%A2%CB%9C%C2%A0")
 	data.Set("quelle", "LoginForm-BCW")
 	data.Set("i", "bcw")
 	data.Set("name", user)
 	data.Set("password", pwd)
 
-	u, _ := url.ParseRequestURI(apiUrl)
+	// Build request
+	u, _ := url.ParseRequestURI(apiURL)
 	u.Path = resource
 	urlStr := u.String()                                                                       // "https://api.com/user/"
 	request, err := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
@@ -103,15 +123,6 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 		log.Fatal(err)
 	}
 
-	// Debug Output
-	// text, _ := httputil.DumpRequest(request, true)
-	// fmt.Println("Request:")
-	// fmt.Println(string(text))
-
-	fmt.Println("Response:")
-	text2, _ := httputil.DumpResponse(response, true)
-	fmt.Println(string(text2))
-
 	// Return Set-Cookie from Response
 	loginCookie := response.Cookies()
 	if len(loginCookie) != 0 {
@@ -123,7 +134,7 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 func getLoginContext() []*http.Cookie {
 	log.Println("Getting Login-Form Auth Context")
 	endpoint := "https://campus.bildungscentrum.de"
-	params := "/nfcampus/pages/login.jsp"
+	params := "/nfcampus/Login.do"
 	url := endpoint + params
 	// Prepare new HTTP request
 	request, err := http.NewRequest("GET", url, nil)
@@ -137,7 +148,6 @@ func getLoginContext() []*http.Cookie {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	// Return login context sessionid
 	if response.StatusCode == 200 {
 		return response.Cookies()
