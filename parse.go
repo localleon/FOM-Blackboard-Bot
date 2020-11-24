@@ -19,7 +19,11 @@ type blackBoardMsg struct {
 
 func parseBlackBoardData(d blackboardRes) {
 	if d.Status == 200 {
-		log.Println("------Starting parsing of Blackboard API Data------")
+		if d.NewElements <= 0 {
+			log.Println("There are no new elements in the OC")
+			return
+		}
+		log.Println("Got new Data in Blackboard. Starting parsing process..... ")
 		output := html.UnescapeString(d.HTML)
 		html := replaceUmlauts(output)
 
@@ -38,7 +42,9 @@ func parseBlackBoardData(d blackboardRes) {
 			// For each item found, parse the message
 			s.Find("ul").Each(parseMessageHTML)
 		})
+		return // skip
 	}
+	log.Println("Detected error message in blackBoardRes while trying to parse. Seems like an API Error. aborting.. ")
 }
 
 func parseMessageHTML(i int, s *goquery.Selection) {

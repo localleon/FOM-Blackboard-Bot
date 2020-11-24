@@ -1,6 +1,10 @@
 # FOM-Blackboard 
 This Discord Bot can read from the Online-Campus Blackboard and write it's messages to an channel.
 
+## Invite Link for the Bot
+https://discord.com/oauth2/authorize?client_id=780869817921962027&scope=bot
+- Bot is currently set to public. Needs to be changed after it's deployed on the Discord Server
+
 
 ## Config 
 - Use the env-Vars `FOM_USER` and `FOM_PWD` to set your login credentials. The programm needs a valid OC Login to authenticate against the Blackboard API.

@@ -7,9 +7,12 @@ import (
 	"net/http"
 	"net/http/cookiejar"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/robfig/cron"
 )
 
 var client *http.Client
@@ -17,7 +20,7 @@ var client *http.Client
 const endpoint string = "https://campus.bildungscentrum.de"
 
 var msgQueue []blackBoardMsg // Global Queue for storing parsed Items
-var bindChannel string
+var bindChannel string       // #blackboard channel can be set static
 var d *discordgo.Session
 
 func main() {
@@ -33,17 +36,36 @@ func main() {
 		Jar: jar,
 	}
 
+	// Setup execution every 30m for periodicly downloading the lastest OC-News
+	getLatestOCNews()
+	c := cron.New()
+	c.AddFunc("@every 30m", getLatestOCNews)
+	c.Start()
+	// fmt.Println(c.Entries()[0])
+
+	// Wait for shutdown via control-c
+	ch := make(chan os.Signal)
+	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+	<-ch
+
+	// Close various things
+	defer func() {
+		log.Println("Received shutdown signal, exiting gracefully........")
+		d.Close()
+		c.Stop()
+	}()
+}
+
+func getLatestOCNews() {
+	log.Println("Downloading latest FOM-OC News from Blackboard")
 	// Authenticate Session
 	username := os.Getenv("FOM_USER")
 	password := os.Getenv("FOM_PWD")
 	context := getLoginContext()
 	getLoginCookie(username, password, context)
-
 	// Parsing new OC-Messages
-	//news := getDashboardBlackboard()
-	news := loadSampleBlackboard("samples/api.html")
+	news := getDashboardBlackboard()
 	parseBlackBoardData(news)
-
 	// Working on the Messages and sending to Discord
 	sendQueueMessages()
 }

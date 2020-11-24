@@ -18,7 +18,7 @@ func initBot() *discordgo.Session {
 	// Open the websocket and begin listening.
 	err = discord.Open()
 	if err != nil {
-		fmt.Println("Error opening Discord session: ", err)
+		log.Println("Error opening Discord session: ", err)
 	}
 
 	// Set channel to bind to
@@ -60,7 +60,7 @@ func welcomeMessage(channelID string) {
 // Works on the global Message queue
 func sendQueueMessages() {
 	for _, msg := range msgQueue {
-		printBlackboardMSG(msg)
+		//printBlackboardMSG(msg)
 		sendMessageToDiscord(msg)
 	}
 	// Newly initalize queue

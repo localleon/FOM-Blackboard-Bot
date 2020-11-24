@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -19,7 +18,6 @@ type blackboardRes struct {
 
 func getDashboardBlackboard() blackboardRes {
 	params := "/nfcampus/startapi/blackboard"
-	//params := "/nfcampus/Node.do?n=5003"
 	url := endpoint + params
 
 	// Prepare new HTTP request
@@ -40,7 +38,7 @@ func getDashboardBlackboard() blackboardRes {
 		json.NewDecoder(response.Body).Decode(&data)
 		return data
 	}
-	fmt.Println("Error while getting Dashboard", response.Status)
+	log.Println("Error while getting Dashboard", response.Status)
 	return blackboardRes{Status: response.StatusCode}
 }
 
