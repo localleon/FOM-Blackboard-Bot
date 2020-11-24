@@ -1,0 +1,4 @@
+# Config file with secret data that does not belong into git
+config.env
+# Binarys
+*.bin
