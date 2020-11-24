@@ -1,0 +1,483 @@
+<!DOCTYPE HTML>
+<html lang="de">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Online-Campus: Blackboard | Meine Hochschule&nbsp;-&nbsp;Detailansicht</title>
+
+    <link rel="stylesheet" type="text/css" href="/nfcampus/jquery/smoothness/jquery-ui.min.css">
+    <link rel="stylesheet" href="/nfcampus/ct/1/t.css" />
+    <link rel="stylesheet" type="text/css" href="/nfcampus/css/uc.css">
+    <link rel="stylesheet" href="/nfcampus/jqueryaddons/tablesorter/css/theme.default.min.css">
+    <link rel="stylesheet" href="/nfcampus/jqueryaddons/tablesorter/css/jquery.tablesorter.pager.min.css">
+    <link href="/nfcampus/select2/select2.min.css" rel="stylesheet" />
+
+    <link rel="icon" href="/nfcampus/favicon.ico" type="image/x-icon">
+    <script type="text/javascript" src="/nfcampus/j/nfcampus.js"></script>
+    <script type="text/javascript" src="/nfcampus/jquery/external/jquery/jquery-1.10.2.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/jquery.scrollTo-1.4.3.1-min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jquery/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/jquery.ui.datepicker-de.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/jquery-ui-timepicker-addon.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/jquery.touch-punch.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/jquery.shapeshift.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/jquery-changeOrDelayedKeyListener.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/tablesorter/js/jquery.tablesorter.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/jqueryaddons/tablesorter/js/extras/jquery.tablesorter.pager.min.js">
+    </script>
+    <script type="text/javascript" src="/nfcampus/select2/select2.min.js"></script>
+    <script type="text/javascript" src="/nfcampus/select2/de.js"></script>
+    <script type="text/javascript" src="/nfcampus/dwr/engine.js"></script>
+    <script type="text/javascript" src="/nfcampus/dwr/util.js"></script>
+    <script type="text/javascript" src="/nfcampus/n/js/campus.js"></script>
+
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/16.8.6/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/16.8.6/umd/react-dom.production.min.js">
+    </script>
+    <link href="//campus.by.nf/service-form-example/css/service-form.css" rel="stylesheet" />
+
+
+
+    <script type="text/javascript">
+        jQuery(document).ready(
+
+            function () {
+
+
+
+                jQuery('.vzaarvideo').click(function () {
+                    var videoId = jQuery(this).attr('id');
+                    var width = jQuery(this).attr('width');
+                    var height = jQuery(this).attr('height');
+                    jQuery(this).replaceWith(embedVideo(videoId, height, width));
+                });
+            });
+
+        function embedVideo(id, height, width) {
+            embedCode =
+                '<iframe allowFullScreen allowTransparency="true" class="video-player" frameborder="0" height="' +
+                height + '" id="vzvd-' + id + '" mozallowfullscreen name="vzvd-' + id + '" src="//view.vzaar.com/' +
+                id + '/player?autoplay=true" title="video player" type="text/html" webkitAllowFullScreen width="' +
+                width + '"></iframe>';
+            return embedCode;
+        }
+    </script>
+    <style type="text/css">
+        body .ui-widget {
+            font-family: Arial, sans-serif;
+            font-size: 1.0em;
+        }
+    </style>
+    <style type="text/css">
+        #kontakt_layer {
+            position: fixed;
+            right: -340px;
+            top: 0;
+            bottom: 0;
+            z-index: 500;
+            background: rgba(0, 0, 0, 0.8);
+            width: 320px;
+            padding-left: 20px;
+            transition: all .3s;
+            border-right: 1px solid black;
+            ;
+        }
+
+        #kontakt_layer .openClose {
+            position: absolute;
+            width: 50px;
+            height: 180px;
+            top: 50%;
+            margin-top: -90px;
+            left: -43px;
+            text-indent: -10000px;
+            font-size: 1px;
+            color: transparent;
+            background: url(/nfcampus/images/flyout/kola.open.png) no-repeat left center transparent;
+        }
+
+        #kontakt_layer.open {
+            right: 0;
+        }
+
+        #kontakt_layer.open .openClose {
+            background-image: url(/nfcampus/images/flyout/kola.close.png);
+        }
+
+        #kl_content {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            color: #FFF;
+            overflow: hidden;
+            width: 300px;
+            margin-top: -210px;
+            padding-right: 20px;
+        }
+
+
+        #kl_content .layerTitel {
+            font-size: 140%;
+            font-weight: bold;
+        }
+
+        #kl_content div.hr {
+            height: 0px;
+            line-height: 1px;
+            border-bottom: 1px solid #cccccc;
+            margin: 10px 0px;
+        }
+
+        #kl_content a {
+            display: block;
+            color: #ffffff;
+            white-space: nowrap;
+            font-size: 110%;
+            text-decoration: none;
+        }
+
+        #kl_content a:hover {
+            color: #FF9700;
+        }
+
+        #kl_content .layerEl {
+            background: url(/nfcampus/images/flyout/tmp.kl-ico.png) no-repeat left center;
+            padding: 15px 20px 15px 40px;
+            margin: 10px 0px;
+            line-height: 100%;
+        }
+
+
+        #kl_content .tel {
+            background-image: url(/nfcampus/images/flyout/kola.tel_o.png);
+        }
+
+        #kl_content .callback {
+            background-image: url(/nfcampus/images/flyout/kola.callback_o.png);
+        }
+
+        #kl_content .chat {
+            background-image: url(/nfcampus/images/flyout/kola.chat_o.png);
+        }
+
+        #kl_content .mail {
+            background-image: url(/nfcampus/images/flyout/kola.mail_o.png);
+        }
+
+        #kl_content .iv {
+            background-image: url(/nfcampus/images/flyout/kola.iv_o.png);
+        }
+
+        #kl_content .im {
+            background-image: url(/nfcampus/images/flyout/kola.im_o.png);
+        }
+
+        #kl_content .kontakt {
+            background-image: url(/nfcampus/images/flyout/kola.kontaktform_o.png);
+        }
+
+        #kl_content .support {
+            background-image: url(/nfcampus/images/flyout/kola.support_o.png);
+        }
+
+        #kl_content .anm {
+            background-image: url(/nfcampus/images/flyout/kola.anmelden_o.png);
+        }
+
+        #kl_content .wapp {
+            background-image: url(/nfcampus/images/flyout/kola.wapp_o.png);
+        }
+    </style>
+
+
+
+
+</head>
+<!-- print_header -->
+
+<body style="height:1000px" class="default-page theme_1 ">
+
+
+
+
+
+
+
+
+
+
+    <div id="pageframe">
+        <div id="header">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            <div id="toprow">
+                <form method="post" action="/nfcampus/Node.do">
+                    <input type="hidden" name="crt" value="19453">
+                    <input type="hidden" name="n" value="5817">
+                    <input type="hidden" name="type" value="campus_funktion">
+                    <span id="info_logout">
+                        Willkommen
+                        <a href="/nfcampus/Profil.do?pid=2504827" target="_blank"
+                            title="Öffentliches Profil aufrufen">Leon Rauschenbach</a> | <a href="/nfcampus/Logout.do"
+                            title="Vom Online-Campus abmelden">Logout</a>
+                    </span>
+                    <input class="input" type="text" name="query">
+                    <input class="submit" type="submit" value="finden!">
+                </form>
+            </div>
+
+            <div id="menurow">
+                <div id="headerlogo"><a href="/nfcampus/Node.do?n=5671" title="Startseite aufrufen"><img
+                            src="/nfcampus/n/images/logos/FOM.gif"></a></div>
+                <ul id="topmenu" style="background-image: url(/nfcampus/n/images/topmenu.3-2.png)"
+                    class="aktiv-2 num-3">
+                    <li class="tlv5671"><a href="/nfcampus/Node.do?n=5671" id="menu746247">Mein Studium</a></li>
+                    <li class="tlv5672_aktiv"><a href="/nfcampus/Node.do?n=5672" id="menu746248">Meine Hochschule</a>
+                    </li>
+                    <li class="tlv5673"><a href="/nfcampus/Node.do?n=5673" id="menu746249">Hilfe & Support</a></li>
+                </ul>
+                <div style="display:none"><span id="smenu746247">Alles rund um Ihr Profil & Ihre
+                        Veranstaltungen</span><span id="smenu746248">Allgemeine Informationen & Services</span><span
+                        id="smenu2003">Aktuelle News & Hinweise auf Veranstaltungen</span><span id="smenu310656">News &
+                        Hinweise zum Nachschlagen</span><span id="smenu746273">Alle Informationen zum Institut, den
+                        Studiengängen und mehr</span><span id="smenu802853">Veranstaltungsübersicht</span><span
+                        id="smenu802854">Alle Lehrenden des Hauses im Überblick.</span><span id="smenu802893">
+                        <p>Alle Termine heute</p>
+                    </span><span id="smenu746265">Networken, Austauschen & Helfen</span><span id="smenu746264">Anträge,
+                        Formulare, Vorlagen, Leitfäden und mehr zum Download</span><span id="smenu746266">Informationen
+                        & Hilfsmittel</span><span id="smenu746249">Hilfe bei technischen Problemen & inhaltlichen
+                        Fragen</span></div>
+            </div>
+
+        </div>
+        <span id="layout1"></span>
+        <div id="contentarea">
+            <span id="layout2"></span>
+            <div id="menu">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                <script type="text/javascript">
+                    jQuery(document).ready(function () {
+                        jQuery('ul#leftmenu').tooltip({
+                            show: {
+                                delay: 1000
+                            },
+                            items: "a",
+                            content: function () {
+                                var t = jQuery('<div></div>');
+                                t.append(jQuery('#s' + jQuery(this).attr('id')).html());
+                                return t;
+                            }
+                        });
+                        jQuery('ul#topmenu').tooltip({
+                            show: {
+                                delay: 1000
+                            },
+                            items: "a",
+                            content: function () {
+                                var t = jQuery('<div></div>');
+                                t.append(jQuery('#s' + jQuery(this).attr('id')).html());
+                                return t;
+                            }
+                        });
+                    });
+                </script>
+
+
+
+
+
+
+
+
+
+                <ul id="leftmenu">
+                    <li class="lv3 lv3_aktiv lv3_aktiv_sub"><a href="/nfcampus/Node.do?n=5003"
+                            id="menu2003">Blackboard</a></li>
+                    <li class="lv4"><a href="/nfcampus/Node.do?n=5506" id="menu310656">Archiv</a></li>
+                    <li class="lv3 lv3_sub"><a href="/nfcampus/Node.do?n=5697" id="menu746273">Organisation</a></li>
+                    <li class="lv3 lv3_sub"><a href="/nfcampus/Node.do?n=5765"
+                            id="menu802853">Veranstaltungsübersicht</a></li>
+                    <li class="lv3 lv3_sub"><a href="/nfcampus/Node.do?n=5766" id="menu802854">Lehrendenübersicht</a>
+                    </li>
+                    <li class="lv3"><a href="/nfcampus/Node.do?n=5805" id="menu802893">Terminübersicht</a></li>
+                    <li class="lv3 lv3_sub"><a href="/nfcampus/Node.do?n=5689" id="menu746265">Networking</a></li>
+                    <li class="lv3"><a href="/nfcampus/Node.do?n=5688" id="menu746264">Download Center</a></li>
+                    <li class="lv3 lv3_sub"><a href="/nfcampus/Node.do?n=5690" id="menu746266">Tools & Services</a></li>
+                </ul>
+
+            </div>
+            <div id="content">
+
+                <h1>Blackboard <span>| Meine Hochschule</span></h1>
+
+
+
+
+                <!-- content_beginn -->
+                <img src="/nfcampus/images/news/news.gif"><b>23.11.2020 16:32 Uhr - News: Erreichbarkeit der FOM am
+                    24.11.2020</b>
+                <p>
+
+
+
+                    <p>Sehr geehrte Studierende und Lehrende,</p>
+
+                    <p>am Dienstag,<strong> 24.11.2020 </strong>findet von 11 Uhr bis 14.30 Uhr eine Betriebsversammlung
+                        bei der FOM statt. Veranstaltungen und Pr&uuml;fungen finden wie geplant statt. Lediglich in der
+                        telefonischen Erreichbarkeit kann es in dieser Zeit vor&uuml;bergehend zu etwas l&auml;ngeren
+                        Wartezeiten kommen.<br />
+                        Gerne k&ouml;nnen Sie uns Ihr Anliegen in der Zwischenzeit per E-Mail &ndash; an die bekannten
+                        Supportadressen - mitteilen, wir werden uns schnellstm&ouml;glich darum k&uuml;mmern.</p>
+
+                    <p>Vielen Dank f&uuml;r Ihr Verst&auml;ndnis.<br />
+                        Ihre Hochschulleitung</p>
+
+
+
+                    <p>
+
+                        <a href="/nfcampus/news/News.do?action=list&objectid=118018097&amp;n=5003&amp;m=2003">zurück zur
+                            Übersicht</a>
+
+
+
+                        <!-- content_end -->
+                        <div class="modulefooter">
+
+                        </div>
+            </div>
+            <div id="footer">
+                <a href="/nfcampus/news/News.do?print=true&amp;n=5003&amp;action=show&amp;objectid=118018097"
+                    title="Für einen Ausdruck optimierte Ansicht aufrufen" class="footerLink printLink">Druckansicht</a>
+            </div>
+            <div class="clearHack"></div>
+        </div>
+
+    </div>
+
+
+    <div id="kontakt_layer" class="openClose">
+        <div class="openClose">Kontakt</div>
+        <div id="kl_content">
+            <div class="layerTitel">Wir beraten Sie gerne</div>
+            <div class="hr hr1"></div>
+
+            <a href="mailto:studienberatung@bildungscentrum.de" class="layerEl mail assl"
+                target="_blank">studienberatung@fom.de</a>
+
+            <a href="#" class="layerEl support assl" target="_blank">Support- & Service-Anfrage stellen</a>
+
+        </div>
+    </div>
+    <div id="demo-dialog" title="Support- & Service-Formular" style="display: none;">
+        <script id="demo-dialog-script" type="text/javascript"></script>
+        <div id="demo-root"></div>
+    </div>
+
+    <div id="assl-info-dialog" title="Informationen zum Support- &amp; Service-Login" style="display: none;">
+        <div>
+            <p>Der Support- &amp; Service-Login ist ein Support- und Beratungsinstrument der BCW-Gruppe, um Sie bei
+                Ihrem individuellen Anliegen schnell und unkompliziert optimal zu unterstützen. Hierbei können die
+                zuständigen Verwaltungsmitarbeitenden Einsicht in Ihr OC-Konto nehmen. Dabei kann nicht auf besonders
+                schützenswerte personenbezogene Daten (z. B. Kontaktdaten, Bankdaten, Adressen oder
+                Kommunikationseinträge) zugegriffen werden.<br><br></p>
+            <p>Der Support- &amp; Service-Login kommt in den Fällen zum Einsatz, in denen Sie entweder Ihr Anliegen
+                außerhalb unserer Servicezeiten bei uns platzieren oder nicht parallel online auf den OC zugreifen
+                können.<br><br></p>
+            <p>Ihre Freigabe zur Nutzung des Support- &amp; Service-Logins ist ereignisbezogen und gilt für eine Dauer
+                von 7 Kalendertagen.<br><br></p>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        window.asslInfoFunc = function () {
+            jQuery("#assl-info-dialog").dialog({
+                modal: true,
+                width: 400,
+                buttons: {
+                    schließen: function () {
+                        jQuery(this).dialog("close");
+                    }
+                }
+            });
+        };
+        $("#kontakt_layer").click(function () {
+            $("#kontakt_layer").toggleClass("open");
+        });
+        $(".support").click(function (e) {
+            e.preventDefault();
+            window.closeServiceForm = function () {
+                $("#demo-dialog").dialog("close");
+            };
+            $("#demo-dialog").dialog({
+                resizable: false,
+                height: 600,
+                width: 480,
+                modal: true
+            });
+            $("#demo-dialog-script").attr("src", "//campus.by.nf/js/service-form/index.js");
+        });
+
+        function windowResizeHandler() {
+            var elements = document.getElementsByClassName("ui-dialog");
+            for (var i = 0; i < elements.length; i++) {
+                if (elements[i]) {
+                    var rect = elements[i].getBoundingClientRect();
+                    var width = rect.width;
+                    var height = rect.height;
+                    elements[i].style.left = (window.innerWidth / 2 - width / 2) + "px";
+                    elements[i].style.top = (window.innerHeight / 2 - height / 2) + "px";
+                }
+            }
+        }
+        window.addEventListener("resize", windowResizeHandler);
+    </script>
+
+    <script src="//campus.by.nf/js/support-bar.js"></script>
+    <div id="assl-blocked-dialog" title="Hinweis" style="display: none;">
+        <div>
+            Aus Datenschutzgründen ist diese Funktion für Sie gesperrt.
+        </div>
+    </div>
+    <div id="literatur-dialog" title="Nutzungsbedingungen" style="display: none;">
+        <div>
+            Bitte akzeptieren Sie zunächst die <a href="/nfcampus/Node.do?n=6052">Nutzungsbedingungen</a>.
+        </div>
+    </div>
+
+</body>
+<!-- print_footer -->
+
+</html>

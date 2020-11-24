@@ -1,17 +1,27 @@
 package main
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
+	"html"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
 	"os"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+
+	"golang.org/x/net/html/charset"
 )
 
 var client *http.Client
+
+const endpoint string = "https://campus.bildungscentrum.de"
 
 type blackboardRes struct {
 	Status      int    `json:"status"`
@@ -19,6 +29,15 @@ type blackboardRes struct {
 	NewElements int    `json:"newelements"`
 	TotalRows   int    `json:"total_rows"`
 }
+
+type blackBoardMsg struct {
+	Title   string
+	Date    string
+	Message string
+	Link    string
+}
+
+var msgQueue []blackBoardMsg // Global Queue for storing parsed Items
 
 func main() {
 	log.Println("Starting Application")
@@ -33,21 +52,128 @@ func main() {
 	fmt.Println("LoginData: ", username, password)
 	// Authenticate Session
 	context := getLoginContext()
-	session := getLoginCookie(username, password, context)
-	s
-	// Parsing
-	news := getDashboardBlackboard(session)
+	getLoginCookie(username, password, context)
+	// // Parsing
+	//news := getDashboardBlackboard()
+	news := loadSampleBlackboard("samples/api.html")
 	parseBlackBoardData(news)
+	sendQueueMessages()
+}
+
+// Works on the global Message queue
+func sendQueueMessages() {
+	for _, msg := range msgQueue {
+		fmt.Println("----------------------------")
+		fmt.Println("Working on:")
+		fmt.Println("- Title:", msg.Title)
+		fmt.Println("- Posted on:", msg.Date)
+		fmt.Println("- Link:", msg.Link)
+		fmt.Println(msg.Message)
+	}
+	// Newly initalize queue
+	msgQueue = []blackBoardMsg{}
 }
 
 func parseBlackBoardData(d blackboardRes) {
 	if d.Status == 200 {
-		fmt.Println(d.HTML)
+		log.Println("------Starting parsing of Blackboard API Data------")
+		output := html.UnescapeString(d.HTML)
+		html := replaceUmlauts(output)
+
+		doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+		if err != nil {
+			log.Println("Couldn't parse html")
+			return
+		}
+		// Find the news  items
+		doc.Find("#cell_blackboardtype1").Each(func(i int, s *goquery.Selection) {
+			// For each item found, parse the message
+			s.Find("ul").Each(parseMessageHTML)
+		})
+		// Find the news  items
+		doc.Find("#cell_mPrio").Each(func(i int, s *goquery.Selection) {
+			// For each item found, parse the message
+			s.Find("ul").Each(parseMessageHTML)
+		})
 	}
 }
 
-func getDashboardBlackboard(s []*http.Cookie) blackboardRes {
-	endpoint := "https://campus.bildungscentrum.de"
+func parseMessageHTML(i int, s *goquery.Selection) {
+	// Only parse msgs with content in it
+	if !s.Is(":empty") {
+		// Find all Values in HTML Doc
+		title := s.Find(".titel").Text()
+		date := s.Find(".date").Text()
+		body := s.Find(".abstract").Text()
+		link, state := s.Find(".abstract").Find("a").Attr("href")
+		if state != true {
+			log.Println("Message", title, "doesn not contain an Hyperlink for more information")
+		}
+
+		// Cleanup and create message object
+		body = replaceUmlauts(body)
+		richBody := parseMessageBodyFromRef(link)
+		if richBody != "" {
+			body = richBody
+		}
+
+		msg := blackBoardMsg{
+			Title:   title,
+			Date:    date,
+			Message: body,
+			Link:    link,
+		}
+		msgQueue = append(msgQueue, msg) // Add Item to queue to be parsed
+	}
+}
+
+func parseMessageBodyFromRef(ref string) string {
+	var msgString string
+
+	url := endpoint + ref
+	// Prepare new HTTP request
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+	request.Header.Add("Content-Type", "charset=UTF-8")
+
+	// Send HTTP request and move the response to the variable
+	res, err := client.Do(request)
+	if err != nil {
+		log.Println("Cant get document from link, seems invalid", err.Error())
+	}
+	if res.StatusCode == 200 {
+		doc, _ := goquery.NewDocumentFromReader(res.Body)
+		// Parse each <p> Tag in the content div where the message is displayed.
+		doc.Find("#content").Find("p").Each(func(i int, s *goquery.Selection) {
+			if !s.Is(":empty") {
+				txt := s.Text()
+				if strings.Contains(txt, "Übersicht") { // Skip if its the "Übersicht" Dialog that is not relevant for the message
+					return
+				}
+				msgString += txt + "\n"
+			}
+		})
+	}
+	return msgString
+}
+
+//loadSampleBlackboards loads an API response from a local file so we dont generate to much network traffic while developing
+func loadSampleBlackboard(path string) blackboardRes {
+	// load parse.html
+	data, _ := ioutil.ReadFile(path)
+
+	b := blackboardRes{
+		Status:      200,
+		NewElements: 1,
+		TotalRows:   1,
+		HTML:        string(data),
+	}
+	return b
+}
+
+func getDashboardBlackboard() blackboardRes {
 	params := "/nfcampus/startapi/blackboard"
 	//params := "/nfcampus/Node.do?n=5003"
 	url := endpoint + params
@@ -57,31 +183,37 @@ func getDashboardBlackboard(s []*http.Cookie) blackboardRes {
 	if err != nil {
 		log.Fatal(err)
 	}
-	// Add all cookies from sessino to request
-	for _, c := range s {
-		request.AddCookie(c)
-	}
+
+	request.Header.Add("Content-Type", "charset=UTF-8")
+
 	// Send HTTP request and move the response to the variable
 	response, err := client.Do(request)
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	if response.StatusCode == 200 {
 		data := blackboardRes{}
 		json.NewDecoder(response.Body).Decode(&data)
 		return data
-	} else {
-		fmt.Println("Error while getting Dashboard", response.Status)
-		return blackboardRes{Status: response.StatusCode}
 	}
+	fmt.Println("Error while getting Dashboard", response.Status)
+	return blackboardRes{Status: response.StatusCode}
+}
+
+func detectContentCharset(body io.Reader) string {
+	r := bufio.NewReader(body)
+	if data, err := r.Peek(1024); err == nil {
+		if _, name, ok := charset.DetermineEncoding(data, ""); ok {
+			return name
+		}
+	}
+	return "utf-8"
 }
 
 // getLoginCookie creates a Session Cookie with FOM-OC Login.do Endpoint
 func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 	log.Println("Authenticating Session.....")
 
-	apiURL := "https://campus.bildungscentrum.de"
 	resource := "/nfcampus/Login.do"
 	// Emulate Form Data of Login Page
 	data := url.Values{}
@@ -94,7 +226,7 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 	data.Set("password", pwd)
 
 	// Build request
-	u, _ := url.ParseRequestURI(apiURL)
+	u, _ := url.ParseRequestURI(endpoint)
 	u.Path = resource
 	urlStr := u.String()                                                                       // "https://api.com/user/"
 	request, err := http.NewRequest(http.MethodPost, urlStr, strings.NewReader(data.Encode())) // URL-encoded payload
@@ -133,7 +265,6 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 
 func getLoginContext() []*http.Cookie {
 	log.Println("Getting Login-Form Auth Context")
-	endpoint := "https://campus.bildungscentrum.de"
 	params := "/nfcampus/Login.do"
 	url := endpoint + params
 	// Prepare new HTTP request
@@ -153,4 +284,15 @@ func getLoginContext() []*http.Cookie {
 		return response.Cookies()
 	}
 	return nil
+}
+
+func replaceUmlauts(s string) string {
+	// Common German Umlauts replacment
+	s = strings.Replace(s, "ä", "ae", -1)
+	s = strings.Replace(s, "ö", "oe", -1)
+	s = strings.Replace(s, "ü", "ue", -1)
+	s = strings.Replace(s, "ß", "ss", -1)
+	s = strings.Replace(s, "\n", "'", -1)
+
+	return s
 }
