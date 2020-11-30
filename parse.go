@@ -19,15 +19,16 @@ type blackBoardMsg struct {
 
 func parseBlackBoardData(d blackboardRes) {
 	if d.Status == 200 {
-		if d.NewElements <= 0 {
-			log.Println("There are no new elements in the OC")
-			return
-		}
+		// if d.NewElements <= 0 {
+		// 	log.Println("There are no new elements in the OC")
+		// 	return
+		// }
 		log.Println("Got new Data in Blackboard. Starting parsing process..... ")
 		output := html.UnescapeString(d.HTML)
 		html := replaceUmlauts(output)
 
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+
 		if err != nil {
 			log.Println("Couldn't parse html")
 			return
@@ -35,12 +36,12 @@ func parseBlackBoardData(d blackboardRes) {
 		// Find the news  items
 		doc.Find("#cell_blackboardtype1").Each(func(i int, s *goquery.Selection) {
 			// For each item found, parse the message
-			s.Find("ul").Each(parseMessageHTML)
+			s.Find("li").Each(parseMessageHTML)
 		})
 		// Find the news  items
 		doc.Find("#cell_mPrio").Each(func(i int, s *goquery.Selection) {
 			// For each item found, parse the message
-			s.Find("ul").Each(parseMessageHTML)
+			s.Find("li").Each(parseMessageHTML)
 		})
 		return // skip
 	}
