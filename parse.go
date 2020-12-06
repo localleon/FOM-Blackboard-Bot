@@ -91,6 +91,8 @@ func parseMessageBodyFromRef(ref string) string {
 	if err != nil {
 		log.Println("Cant get document from link, seems invalid", err.Error())
 	}
+	defer res.Body.Close()
+
 	if res.StatusCode == 200 {
 		doc, _ := goquery.NewDocumentFromReader(res.Body)
 		// Parse each <p> Tag in the content div where the message is displayed.
