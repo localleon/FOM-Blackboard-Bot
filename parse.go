@@ -70,7 +70,9 @@ func parseMessageHTML(i int, s *goquery.Selection) {
 			Link:    link,
 		}
 		msgQueue = append(msgQueue, msg) // Add Item to queue to be parsed
+		return
 	}
+	log.Print("Couldn't find any new articles. \n")
 }
 
 func parseMessageBodyFromRef(ref string) string {

@@ -48,7 +48,7 @@ func main() {
 	c.Start()
 
 	// Wait for shutdown via control-c
-	ch := make(chan os.Signal)
+	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 	<-ch
 
@@ -74,7 +74,7 @@ func checkEnvVars() {
 }
 
 func getLatestOCNews() {
-	log.Println("Requesting new FOM-OC Blackboard Data")
+	log.Print("Requesting new FOM-OC Blackboard Data")
 	// Authenticate Session
 	username := os.Getenv("FOM_USER")
 	password := os.Getenv("FOM_PWD")

@@ -33,6 +33,8 @@ func getDashboardBlackboard() blackboardRes {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer response.Body.Close()
+
 	if response.StatusCode == 200 {
 		data := blackboardRes{}
 		jErr := json.NewDecoder(response.Body).Decode(&data)
@@ -82,6 +84,7 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer response.Body.Close()
 
 	// Return Set-Cookie from Response
 	loginCookie := response.Cookies()
@@ -106,6 +109,8 @@ func getLoginContext() []*http.Cookie {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer response.Body.Close()
+
 	// Return login context sessionid
 	if response.StatusCode == 200 {
 		return response.Cookies()
