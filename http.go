@@ -35,7 +35,11 @@ func getDashboardBlackboard() blackboardRes {
 	}
 	if response.StatusCode == 200 {
 		data := blackboardRes{}
-		json.NewDecoder(response.Body).Decode(&data)
+		jErr := json.NewDecoder(response.Body).Decode(&data)
+		if jErr != nil {
+			log.Println("Can't parse Blackboard-API Data into blackboardRes{} object")
+			return blackboardRes{Status: 500} // Internal Error
+		}
 		return data
 	}
 	log.Println("Error while getting Dashboard", response.Status)
@@ -44,8 +48,6 @@ func getDashboardBlackboard() blackboardRes {
 
 // getLoginCookie creates a Session Cookie with FOM-OC Login.do Endpoint
 func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
-	log.Println("Authenticating Session.....")
-
 	resource := "/nfcampus/Login.do"
 	// Emulate Form Data of Login Page
 	data := url.Values{}
@@ -54,10 +56,6 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 	data.Set("iehack", "%C3%A2%CB%9C%C2%A0")
 	data.Set("quelle", "LoginForm-BCW")
 	data.Set("i", "bcw")
-
-	if user == "" || pwd == "" {
-		log.Fatal("User or PWD Env-Var is empty. Please provided login credentials")
-	}
 	data.Set("name", user)
 	data.Set("password", pwd)
 
@@ -94,7 +92,6 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 }
 
 func getLoginContext() []*http.Cookie {
-	log.Println("Getting Login-Form Auth Context")
 	params := "/nfcampus/Login.do"
 	url := endpoint + params
 	// Prepare new HTTP request

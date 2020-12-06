@@ -25,6 +25,7 @@ var d *discordgo.Session
 
 func main() {
 	log.Println("Starting FOM-OC Discord Bot")
+	checkEnvVars()
 
 	// Init Discord Bot
 	d = initBot()
@@ -39,9 +40,12 @@ func main() {
 	// Setup execution every 30m for periodicly downloading the lastest OC-News
 	getLatestOCNews()
 	c := cron.New()
-	c.AddFunc("@every 30m", getLatestOCNews)
+	cErr := c.AddFunc("@every 30m", getLatestOCNews)
+	if cErr != nil {
+		log.Println("Can't setup cron handler")
+		os.Exit(5)
+	}
 	c.Start()
-	// fmt.Println(c.Entries()[0])
 
 	// Wait for shutdown via control-c
 	ch := make(chan os.Signal)
@@ -56,11 +60,25 @@ func main() {
 	}()
 }
 
+//checkEnvVars tests if all enviroment variables are correctly set
+func checkEnvVars() {
+	if os.Getenv("FOM_USER") == "" || os.Getenv("FOM_PWD") == "" {
+		log.Fatal("User or PWD Env-Var is empty. Please provided login credentials")
+	}
+	if os.Getenv("FOM_DTOKEN") == "" {
+		log.Fatal("Discord Token Env-Var is not set. Cancelling..")
+	}
+	if os.Getenv("FOM_CHANNEL") == "" {
+		log.Fatal("Discord Channel ID is empty. We need a channel to write to for the bot")
+	}
+}
+
 func getLatestOCNews() {
-	log.Println("Downloading latest FOM-OC News from Blackboard")
+	log.Println("Requesting new FOM-OC Blackboard Data")
 	// Authenticate Session
 	username := os.Getenv("FOM_USER")
 	password := os.Getenv("FOM_PWD")
+
 	context := getLoginContext()
 	getLoginCookie(username, password, context)
 	// Parsing new OC-Messages

@@ -19,18 +19,13 @@ type blackBoardMsg struct {
 
 func parseBlackBoardData(d blackboardRes) {
 	if d.Status == 200 {
-		// if d.NewElements <= 0 {
-		// 	log.Println("There are no new elements in the OC")
-		// 	return
-		// }
-		log.Println("Got new Data in Blackboard. Starting parsing process..... ")
 		output := html.UnescapeString(d.HTML)
 		html := replaceUmlauts(output)
 
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
 
 		if err != nil {
-			log.Println("Couldn't parse html")
+			log.Println("Couldn't parse html of BlackBoardData")
 			return
 		}
 		// Find the news  items
@@ -51,12 +46,13 @@ func parseBlackBoardData(d blackboardRes) {
 func parseMessageHTML(i int, s *goquery.Selection) {
 	// Only parse msgs with content in it
 	if !s.Is(":empty") {
+		log.Println("Got new Data in Blackboard. Starting parsing process..... ")
 		// Find all Values in HTML Doc
 		title := s.Find(".titel").Text()
 		date := s.Find(".date").Text()
 		body := s.Find(".abstract").Text()
 		link, state := s.Find(".abstract").Find("a").Attr("href")
-		if state != true {
+		if !state {
 			log.Println("Message", title, "doesn not contain an Hyperlink for more information")
 		}
 

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -39,10 +38,13 @@ func sendMessageToDiscord(msg blackBoardMsg) {
 	text += msg.Message + "\n\n"
 	text += "*" + endpoint + msg.Link + "*"
 
-	d.ChannelMessageSend(
+	_, mErr := d.ChannelMessageSend(
 		c.ID,
 		text,
 	)
+	if mErr != nil {
+		log.Println("Error while sending BlackBoardMessage to Discord Channel")
+	}
 }
 
 func welcomeMessage(channelID string) {
@@ -51,10 +53,13 @@ func welcomeMessage(channelID string) {
 	if err != nil {
 		log.Println("Error while trying to write welcome message", err.Error())
 	}
-	d.ChannelMessageSend(
+	_, mErr := d.ChannelMessageSend(
 		c.ID,
-		fmt.Sprintf("FOM-OC Bot is ready to rock!"),
+		"FOM-OC Bot is ready to rock!",
 	)
+	if mErr != nil {
+		log.Println("Error while sending BlackBoardMessage to Discord Channel")
+	}
 }
 
 // Works on the global Message queue
