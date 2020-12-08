@@ -11,7 +11,6 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/bwmarrin/discordgo"
 	"github.com/robfig/cron"
 )
 
@@ -21,15 +20,10 @@ const endpoint string = "https://campus.bildungscentrum.de"
 
 var msgQueue []blackBoardMsg // Global Queue for storing parsed Items
 var bindChannel string       // #blackboard channel can be set static
-var d *discordgo.Session
 
 func main() {
 	log.Println("Starting FOM-OC Discord Bot")
 	checkEnvVars()
-
-	// Init Discord Bot
-	d = initBot()
-	//welcomeMessage(bindChannel) // Currently only to register that the bot is online
 
 	// HTTP Client Setup with global cookie storage
 	jar, _ := cookiejar.New(nil)
@@ -55,7 +49,6 @@ func main() {
 	// Close various things
 	defer func() {
 		log.Println("Received shutdown signal, exiting gracefully........")
-		d.Close()
 		c.Stop()
 	}()
 }
@@ -65,11 +58,8 @@ func checkEnvVars() {
 	if os.Getenv("FOM_USER") == "" || os.Getenv("FOM_PWD") == "" {
 		log.Fatal("User or PWD Env-Var is empty. Please provided login credentials")
 	}
-	if os.Getenv("FOM_DTOKEN") == "" {
-		log.Fatal("Discord Token Env-Var is not set. Cancelling..")
-	}
-	if os.Getenv("FOM_CHANNEL") == "" {
-		log.Fatal("Discord Channel ID is empty. We need a channel to write to for the bot")
+	if os.Getenv("FOM_WEBHOOK") == "" {
+		log.Fatal("Discord WebHook Env-Var is not set. Cancelling..")
 	}
 }
 

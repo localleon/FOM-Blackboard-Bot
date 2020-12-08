@@ -53,7 +53,7 @@ func parseMessageHTML(i int, s *goquery.Selection) {
 		body := s.Find(".abstract").Text()
 		link, state := s.Find(".abstract").Find("a").Attr("href")
 		if !state {
-			log.Println("Message", title, "doesn not contain an Hyperlink for more information")
+			log.Println("Message", title, "does not contain an Hyperlink for more information")
 		}
 
 		// Cleanup and create message object
