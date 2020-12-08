@@ -1,64 +1,94 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"log"
+	"net/http"
 	"os"
-
-	"github.com/bwmarrin/discordgo"
 )
 
-func initBot() *discordgo.Session {
-	token := os.Getenv("FOM_DTOKEN")
-	discord, err := discordgo.New("Bot " + token)
-	if err != nil {
-		log.Println("Error connecting with Token to Discord API.")
-		return nil
-	}
-	// Open the websocket and begin listening.
-	err = discord.Open()
-	if err != nil {
-		log.Println("Error opening Discord session: ", err)
-	}
+// Thumbnail is the embeded contentview of a discord message
+type Thumbnail struct {
+	URL string `json:"url"`
+}
 
-	// Set channel to bind to
-	bindChannel = os.Getenv("FOM_CHANNEL")
+//Fields is discords field object in embeded content
+type Fields struct {
+	Name   string `json:"name"`
+	Value  string `json:"value"`
+	Inline bool   `json:"inline"`
+}
 
-	return discord
+//Footer is discords footer information
+type Footer struct {
+	Text    string `json:"text"`
+	IconURL string `json:"icon_url"`
+}
+
+//Embeds is discord any embedded content
+type Embeds struct {
+	Title     string    `json:"title"`
+	URL       string    `json:"url"`
+	Color     int       `json:"color"`
+	Timestamp string    `json:"timestamp"`
+	Thumbnail Thumbnail `json:"thumbnail"`
+	Fields    []Fields  `json:"fields"`
+	Footer    Footer    `json:"footer"`
+}
+
+//Webhook represents the json struct the discord API expects
+type Webhook struct {
+	Username  string   `json:"username"`
+	AvatarURL string   `json:"avatar_url"`
+	Embeds    []Embeds `json:"embeds"`
 }
 
 func sendMessageToDiscord(msg blackBoardMsg) {
-	c, err := d.Channel(bindChannel)
-	if err != nil {
-		log.Println("Error while trying to bind to #blackboard channel", err.Error())
-	}
-	// Format msg Body nicley and send to discord
-	var text string
-	text += "**" + msg.Title + "**\n"
-	text += "*Date: " + msg.Date + "*\n\n"
-	text += msg.Message + "\n\n"
-	text += "*" + endpoint + msg.Link + "*"
+	c := &http.Client{}
 
-	_, mErr := d.ChannelMessageSend(
-		c.ID,
-		text,
-	)
-	if mErr != nil {
-		log.Println("Error while sending BlackBoardMessage to Discord Channel")
+	// Emebed Content only supports 1024 characters in total
+	if len(msg.Message) >= 1023 {
+		msg.Message = msg.Message[:1000] + ".........."
 	}
-}
 
-func welcomeMessage(channelID string) {
-	// Send WelcomeMessage to bindChannel
-	c, err := d.Channel(channelID)
-	if err != nil {
-		log.Println("Error while trying to write welcome message", err.Error())
+	// Construct Webhook
+	nURL := "https://campus.bildungscentrum.de/" + msg.Link
+
+	e := Embeds{
+		Title: msg.Title,
+		URL:   nURL,
+		Color: 3066993, // Green
+		Fields: []Fields{
+			Fields{
+				Name:   "Am " + msg.Date + ":",
+				Value:  fmt.Sprintf("%s", msg.Message),
+				Inline: true,
+			},
+		},
 	}
-	_, mErr := d.ChannelMessageSend(
-		c.ID,
-		"FOM-OC Bot is ready to rock!",
-	)
-	if mErr != nil {
-		log.Println("Error while sending BlackBoardMessage to Discord Channel")
+
+	w := Webhook{
+		Username: "FOM-OC",
+		Embeds:   []Embeds{e},
+	}
+
+	webhookReq, err := json.Marshal(w)
+	if err != nil {
+		log.Println("Couldn't parse Blackboard Message into Discord Embeded struct")
+	}
+
+	// Send the webhook to the discord api
+	url := os.Getenv("FOM_WEBHOOK")
+	req, rErr := http.NewRequest("POST", url, bytes.NewBuffer(webhookReq))
+	if rErr != nil {
+		log.Println("Couldn't create discord request out of blackboard messag")
+	}
+	req.Header.Add("Content-Type", "application/json")
+	_, qErr := c.Do(req)
+	if qErr != nil {
+		log.Println("Error while sending http discord webhook")
 	}
 }
 
