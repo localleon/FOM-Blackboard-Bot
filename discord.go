@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -63,7 +62,7 @@ func sendMessageToDiscord(msg blackBoardMsg) {
 		Fields: []Fields{
 			Fields{
 				Name:   "Am " + msg.Date + ":",
-				Value:  fmt.Sprintf("%s", msg.Message),
+				Value:  msg.Message,
 				Inline: true,
 			},
 		},
@@ -86,10 +85,12 @@ func sendMessageToDiscord(msg blackBoardMsg) {
 		log.Println("Couldn't create discord request out of blackboard messag")
 	}
 	req.Header.Add("Content-Type", "application/json")
-	_, qErr := c.Do(req)
+
+	res, qErr := c.Do(req)
 	if qErr != nil {
 		log.Println("Error while sending http discord webhook")
 	}
+	defer res.Body.Close()
 }
 
 // Works on the global Message queue
