@@ -19,7 +19,6 @@ var client *http.Client
 const endpoint string = "https://campus.bildungscentrum.de"
 
 var msgQueue []blackBoardMsg // Global Queue for storing parsed Items
-var bindChannel string       // #blackboard channel can be set static
 
 func main() {
 	log.Println("Starting FOM-OC Discord Bot")
