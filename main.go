@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -65,9 +66,16 @@ func checkEnvVars() {
 func getLatestOCNews() {
 	log.Print("Requesting new FOM-OC Blackboard Data")
 	// Authenticate Session
-	username := os.Getenv("FOM_USER")
-	password := os.Getenv("FOM_PWD")
+	envUser, uErr := base64.StdEncoding.DecodeString(os.Getenv("FOM_USER"))
+	envPwd, pErr := base64.StdEncoding.DecodeString(os.Getenv("FOM_PWD"))
+	if uErr != nil || pErr != nil {
+		log.Fatalf("Error decoding base64 values of user/password values")
+	}
 
+	username := string(envUser)
+	password := string(envPwd)
+
+	// Decode Credentials to cleartext
 	context := getLoginContext()
 	getLoginCookie(username, password, context)
 	// Parsing new OC-Messages
