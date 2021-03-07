@@ -81,6 +81,8 @@ func getLatestOCNews() {
 	// Parsing new OC-Messages
 	news := getDashboardBlackboard()
 	parseBlackBoardData(news)
+	// Check notification for courses
+	getCourseNotification()
 	// Working on the Messages and sending to Discord
 	sendQueueMessages()
 }
