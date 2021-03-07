@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -46,6 +47,34 @@ func getDashboardBlackboard() blackboardRes {
 	}
 	log.Println("Error while getting Dashboard", response.Status)
 	return blackboardRes{Status: response.StatusCode}
+}
+
+func getCourseNotification() {
+	log.Println("Requesting private Message List")
+	params := "/nfcampus/Inbox.do"
+	url := endpoint + params
+
+	// Prepare new HTTP request
+	request, err := http.NewRequest("GET", url, nil)
+	request.Header.Add("Content-Type", "charset=UTF-8")
+
+	// Send HTTP request and move the response to the variable
+	response, err := client.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode == 200 {
+		data, errB := ioutil.ReadAll(response.Body)
+		if errB != nil {
+			log.Println("Error decoding Body of Notifications")
+		}
+		// Check if there's a Notification for upcoming lessons
+		parsePrivateMessagesSection(string(data))
+		return
+	}
+	log.Println("Error while getting Dashboard", response.Status)
 }
 
 // getLoginCookie creates a Session Cookie with FOM-OC Login.do Endpoint

@@ -1,10 +1,14 @@
 package main
 
 import (
+	"fmt"
 	"html"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"regexp"
 	"strings"
+	"time"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -15,6 +19,79 @@ type blackBoardMsg struct {
 	Date    string
 	Message string
 	Link    string
+}
+
+func parsePrivateMessagesSection(data string) {
+
+	// Create HTML Document
+	output := html.UnescapeString(data)
+	html := replaceUmlauts(output)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+
+	if err != nil {
+		log.Println("Couldn't parse html of Notifications")
+		return
+	}
+	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
+		dateMatch := true
+		s.Find("td").Each(func(h int, row *goquery.Selection) {
+			if h == 2 { // Check for todays message
+				day := time.Now().Format("01.02.2006")
+				if strings.Contains(row.Text(), day) {
+					dateMatch = true
+				}
+			}
+			if dateMatch { // Parse todays message for notifications
+				if h == 5 {
+					if strings.Contains(row.Text(), "Ihre Videokonferenz startet in Kuerze um") {
+						subject := row.Text()
+						msgLink, _ := row.Find("a").Attr("href")
+						fmt.Println("Course: ", msgLink)
+						parseNotification(subject, msgLink)
+					}
+				}
+			}
+		})
+	})
+
+}
+
+func parseNotification(subject, notfiyLink string) {
+	url := endpoint + notfiyLink
+
+	// Prepare new HTTP request
+	request, err := http.NewRequest("GET", url, nil)
+	request.Header.Add("Content-Type", "charset=UTF-8")
+
+	// Send HTTP request and move the response to the variable
+	response, err := client.Do(request)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode == 200 {
+		data, errB := ioutil.ReadAll(response.Body)
+		if errB != nil {
+			log.Println("Error decoding Body of Notifications")
+		}
+		// Create HTML Document
+		output := html.UnescapeString(string(data))
+		html := replaceUmlauts(output)
+		doc, _ := goquery.NewDocumentFromReader(strings.NewReader(html))
+		s := doc.Find("table").Find("fieldset")
+
+		s.Contents().Each(func(i int, s *goquery.Selection) {
+			if !s.Is("br") {
+				r, _ := regexp.Compile("^http|https+://*$") // This matches a line that contains only a link
+				if r.Match([]byte(s.Text())) {
+					fmt.Println("Link:", s.Text())
+					sendCourseNotification(s.Text(), subject[1:])
+				}
+			}
+		})
+
+	}
 }
 
 func parseBlackBoardData(d blackboardRes) {
