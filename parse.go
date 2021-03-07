@@ -51,8 +51,8 @@ func parsePrivateMessagesSection(data string) {
 					tStr = strings.ReplaceAll(tStr, "'", "")
 					tStr = strings.TrimSpace(tStr)
 
-					rowT, err := time.Parse("15:04:05", tStr)
-					if err != nil {
+					rowT, errT := time.Parse("15:04:05", tStr)
+					if errT != nil {
 						log.Println("Error while parsing date from table row")
 					}
 
@@ -126,7 +126,7 @@ func parseNotification(subject, notfiyLink string) {
 
 		s.Contents().Each(func(i int, s *goquery.Selection) {
 			if !s.Is("br") {
-				r, _ := regexp.Compile("^http|https+://*$") // This matches a line that contains only a link
+				r := regexp.MustCompile("^http|https+://*$") // This matches a line that contains only a link
 				if r.Match([]byte(s.Text())) {
 					sendCourseNotification(s.Text(), subject[1:])
 				}
@@ -206,9 +206,9 @@ func parseMessageBodyFromRef(ref string) string {
 	request.Header.Add("Content-Type", "charset=UTF-8")
 
 	// Send HTTP request and move the response to the variable
-	res, err := client.Do(request)
-	if err != nil {
-		log.Println("Cant get document from link, seems invalid", err.Error())
+	res, errR := client.Do(request)
+	if errR != nil {
+		log.Println("Cant get document from link, seems invalid", errR.Error())
 	}
 	defer res.Body.Close()
 
