@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"html"
 	"io/ioutil"
 	"log"
@@ -21,6 +20,8 @@ type blackBoardMsg struct {
 	Link    string
 }
 
+var notificationBuffer []string // saves sent notifications on runtime. The notification feature makes the application somewhat stateful because we need to remeber sent messages
+
 func parsePrivateMessagesSection(data string) {
 
 	// Create HTML Document
@@ -33,7 +34,10 @@ func parsePrivateMessagesSection(data string) {
 		return
 	}
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
-		dateMatch := true
+		// Keep date/time for element
+		dateMatch := false
+		timeWindow := false
+
 		s.Find("td").Each(func(h int, row *goquery.Selection) {
 			if h == 2 { // Check for todays message
 				day := time.Now().Format("01.02.2006")
@@ -42,18 +46,57 @@ func parsePrivateMessagesSection(data string) {
 				}
 			}
 			if dateMatch { // Parse todays message for notifications
-				if h == 5 {
+				if h == 3 { // Check if time of message is within notification window
+					tStr := row.Text()
+					tStr = strings.ReplaceAll(tStr, "'", "")
+					tStr = strings.TrimSpace(tStr)
+
+					rowT, err := time.Parse("15:04:05", tStr)
+					if err != nil {
+						log.Println("Error while parsing date from table row")
+					}
+
+					// Time windows where a notification could be sent
+					t1, _ := time.Parse("15:04:05", "07:30:00")
+					t2, _ := time.Parse("15:04:05", "08:30:00")
+					t3, _ := time.Parse("15:04:05", "11:30:00")
+					t4, _ := time.Parse("15:04:05", "12:30:00")
+
+					// Check if our message is in window
+					if rowT.After(t1) && rowT.Before(t2) || rowT.After(t3) && rowT.Before(t4) {
+						timeWindow = true
+					}
+
+				}
+				if h == 5 && timeWindow {
 					if strings.Contains(row.Text(), "Ihre Videokonferenz startet in Kuerze um") {
 						subject := row.Text()
-						msgLink, _ := row.Find("a").Attr("href")
-						fmt.Println("Course: ", msgLink)
-						parseNotification(subject, msgLink)
+						subject = strings.ReplaceAll(subject, "'", "")
+						subject = strings.TrimSpace(subject)
+
+						// Check if message was already sent out
+						if !contains(notificationBuffer, subject) {
+							notificationBuffer = append(notificationBuffer, subject)
+							msgLink, _ := row.Find("a").Attr("href")
+							parseNotification(subject, msgLink)
+						}
 					}
 				}
 			}
 		})
 	})
 
+}
+
+// contains checks if a string is present in a slice
+func contains(s []string, str string) bool {
+	for _, v := range s {
+		if v == str {
+			return true
+		}
+	}
+
+	return false
 }
 
 func parseNotification(subject, notfiyLink string) {
@@ -85,7 +128,6 @@ func parseNotification(subject, notfiyLink string) {
 			if !s.Is("br") {
 				r, _ := regexp.Compile("^http|https+://*$") // This matches a line that contains only a link
 				if r.Match([]byte(s.Text())) {
-					fmt.Println("Link:", s.Text())
 					sendCourseNotification(s.Text(), subject[1:])
 				}
 			}

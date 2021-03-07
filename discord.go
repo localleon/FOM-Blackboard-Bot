@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -74,7 +73,7 @@ func sendCourseNotification(confLink, title string) {
 
 	// Send the webhook to the discord api
 	url := os.Getenv("FOM_WEBHOOK_COURSES")
-	fmt.Println(url)
+
 	req, rErr := http.NewRequest("POST", url, bytes.NewBuffer(webhookReq))
 	if rErr != nil {
 		log.Println("Couldn't create discord request out of course notification")

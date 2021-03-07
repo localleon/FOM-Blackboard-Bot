@@ -34,7 +34,7 @@ func main() {
 	// Setup execution every 30m for periodicly downloading the lastest OC-News
 	getLatestOCNews()
 	c := cron.New()
-	cErr := c.AddFunc("@every 30m", getLatestOCNews)
+	cErr := c.AddFunc("@every 15m", getLatestOCNews)
 	if cErr != nil {
 		log.Println("Can't setup cron handler")
 		os.Exit(5)
