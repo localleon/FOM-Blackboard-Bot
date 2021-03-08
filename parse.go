@@ -58,7 +58,7 @@ func parsePrivateMessagesSection(data string) {
 
 					// Time windows where a notification could be sent , UTC time in strings is converted to CET
 					t1, _ := time.Parse("02.01.2006 15:04:05", day+" 06:30:00")
-					t2, _ := time.Parse("02.01.2006 15:04:05", day+" 08:30:00")
+					t2, _ := time.Parse("02.01.2006 15:04:05", day+" 07:30:00")
 					t3, _ := time.Parse("02.01.2006 15:04:05", day+" 10:30:00")
 					t4, _ := time.Parse("02.01.2006 15:04:05", day+" 11:30:00")
 
