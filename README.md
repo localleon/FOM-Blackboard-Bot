@@ -20,10 +20,6 @@ This is the basic application Design
 +--------------+  Write Channel +-----------------+
 ```
 
-## Invite Link for the Bot
-https://discord.com/oauth2/authorize?client_id=780869817921962027&scope=bot
-- Bot is currently set to public. Needs to be changed after it's deployed on the Discord Server
-
 ## Discord Server Config
 - Create a channel #blackboard and create a webhook for `FOM_WEBHOOK` env-var
 - Create a permission role for the bot. The bot needs to have write/read permissions for the channel. Permission Integer is 190464
