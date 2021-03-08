@@ -40,7 +40,8 @@ func parsePrivateMessagesSection(data string) {
 
 		s.Find("td").Each(func(h int, row *goquery.Selection) {
 			if h == 2 { // Check for todays message
-				day := time.Now().Format("01.02.2006")
+				loc, _ := time.LoadLocation("Europe/Berlin")
+				day := time.Now().In(loc).Format("01.02.2006")
 				if strings.Contains(row.Text(), day) {
 					dateMatch = true
 				}
