@@ -53,7 +53,7 @@ func sendCourseNotification(confLink, title string) {
 		Title: title,
 		Color: 3066993, // Green
 		Fields: []Fields{
-			Fields{
+			{
 				Name:   "Conference Notification",
 				Value:  confLink,
 				Inline: false,
@@ -103,7 +103,7 @@ func sendMessageToDiscord(msg blackBoardMsg) {
 		URL:   nURL,
 		Color: 3066993, // Green
 		Fields: []Fields{
-			Fields{
+			{
 				Name:   "Am " + msg.Date + ":",
 				Value:  msg.Message,
 				Inline: true,

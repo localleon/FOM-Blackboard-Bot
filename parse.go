@@ -36,51 +36,54 @@ func parsePrivateMessagesSection(data string) {
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		// Keep date/time for element
 		dateMatch := false
-		timeWindow := false
+		day := ""
 
 		s.Find("td").Each(func(h int, row *goquery.Selection) {
 			if h == 2 { // Check for todays message
+
 				loc, _ := time.LoadLocation("Europe/Berlin")
-				day := time.Now().In(loc).Format("01.02.2006")
+				day = time.Now().In(loc).Format("02.01.2006")
+
 				if strings.Contains(row.Text(), day) {
 					dateMatch = true
 				}
 			}
+
 			if dateMatch { // Parse todays message for notifications
-				if h == 3 { // Check if time of message is within notification window
-					tStr := row.Text()
-					tStr = strings.ReplaceAll(tStr, "'", "")
-					tStr = strings.TrimSpace(tStr)
 
-					rowT, errT := time.Parse("15:04:05", tStr)
-					if errT != nil {
-						log.Println("Error while parsing date from table row")
-					}
+				if h == 5 {
+					// Check Timeslot
+					loc, _ := time.LoadLocation("Europe/Berlin")
+					hour := time.Now().In(loc)
 
-					// Time windows where a notification could be sent
-					t1, _ := time.Parse("15:04:05", "07:30:00")
-					t2, _ := time.Parse("15:04:05", "08:30:00")
-					t3, _ := time.Parse("15:04:05", "11:30:00")
-					t4, _ := time.Parse("15:04:05", "12:30:00")
+					// Time windows where a notification could be sent , UTC time in strings is converted to CET
+					t1, _ := time.Parse("02.01.2006 15:04:05", day+" 06:30:00")
+					t2, _ := time.Parse("02.01.2006 15:04:05", day+" 08:30:00")
+					t3, _ := time.Parse("02.01.2006 15:04:05", day+" 10:30:00")
+					t4, _ := time.Parse("02.01.2006 15:04:05", day+" 11:30:00")
 
 					// Check if our message is in window
-					if rowT.After(t1) && rowT.Before(t2) || rowT.After(t3) && rowT.Before(t4) {
-						timeWindow = true
-					}
+					if hour.After(t1.In(loc)) && hour.Before(t2.In(loc)) || hour.After(t3.In(loc)) && hour.Before(t4.In(loc)) {
 
-				}
-				if h == 5 && timeWindow {
-					if strings.Contains(row.Text(), "Ihre Videokonferenz startet in Kuerze um") {
-						subject := row.Text()
-						subject = strings.ReplaceAll(subject, "'", "")
-						subject = strings.TrimSpace(subject)
+						// Check if subject is right
+						if strings.Contains(row.Text(), "Ihre Videokonferenz startet in Kuerze um") {
+							subject := row.Text()
+							subject = strings.ReplaceAll(subject, "'", "")
+							subject = strings.TrimSpace(subject)
 
-						// Check if message was already sent out
-						if !contains(notificationBuffer, subject) {
-							notificationBuffer = append(notificationBuffer, subject)
-							msgLink, _ := row.Find("a").Attr("href")
-							parseNotification(subject, msgLink)
+							// Check if message was already sent out
+							if !contains(notificationBuffer, subject) {
+								notificationBuffer = append(notificationBuffer, subject)
+								msgLink, _ := row.Find("a").Attr("href")
+
+								log.Println("Sending Discord Notification with link")
+								parseNotification(subject, msgLink)
+							} else {
+								log.Println("Matching notification found, we already sent that one! aborting...")
+							}
 						}
+					} else {
+						log.Println("Notification is out of timewindow, aborting")
 					}
 				}
 			}
