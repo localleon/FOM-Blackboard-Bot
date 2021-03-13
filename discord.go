@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 )
 
 // Thumbnail is the embeded contentview of a discord message
@@ -44,39 +43,37 @@ type Webhook struct {
 	Embeds    []Embeds `json:"embeds"`
 }
 
-func sendCourseNotification(confLink, title string) {
+func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
 	c := &http.Client{}
 
 	// Construct Webhook
 
 	e := Embeds{
 		Title: title,
+		URL:   eURL,
 		Color: 3066993, // Green
 		Fields: []Fields{
 			{
-				Name:   "Conference Notification",
-				Value:  confLink,
+				Name:   fieldName,
+				Value:  msg,
 				Inline: false,
 			},
 		},
 	}
 
 	w := Webhook{
-		Username: "FOM-OC",
+		Username: hookName,
 		Embeds:   []Embeds{e},
 	}
 
 	webhookReq, err := json.Marshal(w)
 	if err != nil {
-		log.Println("Couldn't parse Blackboard Message into Discord Embeded struct")
+		log.Println("Couldn't parse struct into WebHook Request")
 	}
 
-	// Send the webhook to the discord api
-	url := os.Getenv("FOM_WEBHOOK_COURSES")
-
-	req, rErr := http.NewRequest("POST", url, bytes.NewBuffer(webhookReq))
+	req, rErr := http.NewRequest("POST", hook, bytes.NewBuffer(webhookReq))
 	if rErr != nil {
-		log.Println("Couldn't create discord request out of course notification")
+		log.Println("Couldn't create discord webhook request out of data")
 	}
 	req.Header.Add("Content-Type", "application/json")
 
@@ -85,63 +82,4 @@ func sendCourseNotification(confLink, title string) {
 		log.Println("Error while sending http discord webhook")
 	}
 	defer res.Body.Close()
-}
-
-func sendMessageToDiscord(msg blackBoardMsg) {
-	c := &http.Client{}
-
-	// Emebed Content only supports 1024 characters in total
-	if len(msg.Message) >= 1023 {
-		msg.Message = msg.Message[:1000] + ".........."
-	}
-
-	// Construct Webhook
-	nURL := "https://campus.bildungscentrum.de/" + msg.Link
-
-	e := Embeds{
-		Title: msg.Title,
-		URL:   nURL,
-		Color: 3066993, // Green
-		Fields: []Fields{
-			{
-				Name:   "Am " + msg.Date + ":",
-				Value:  msg.Message,
-				Inline: true,
-			},
-		},
-	}
-
-	w := Webhook{
-		Username: "FOM-OC",
-		Embeds:   []Embeds{e},
-	}
-
-	webhookReq, err := json.Marshal(w)
-	if err != nil {
-		log.Println("Couldn't parse Blackboard Message into Discord Embeded struct")
-	}
-
-	// Send the webhook to the discord api
-	url := os.Getenv("FOM_WEBHOOK")
-	req, rErr := http.NewRequest("POST", url, bytes.NewBuffer(webhookReq))
-	if rErr != nil {
-		log.Println("Couldn't create discord request out of blackboard messag")
-	}
-	req.Header.Add("Content-Type", "application/json")
-
-	res, qErr := c.Do(req)
-	if qErr != nil {
-		log.Println("Error while sending http discord webhook")
-	}
-	defer res.Body.Close()
-}
-
-// Works on the global Message queue
-func sendQueueMessages() {
-	for _, msg := range msgQueue {
-		//printBlackboardMSG(msg)
-		sendMessageToDiscord(msg)
-	}
-	// Newly initalize queue
-	msgQueue = []blackBoardMsg{}
 }

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -89,7 +90,6 @@ func parsePrivateMessagesSection(data string) {
 			}
 		})
 	})
-
 }
 
 // contains checks if a string is present in a slice
@@ -132,7 +132,8 @@ func parseNotification(subject, notfiyLink string) {
 			if !s.Is("br") {
 				r := regexp.MustCompile("^http|https+://*$") // This matches a line that contains only a link
 				if r.Match([]byte(s.Text())) {
-					sendCourseNotification(s.Text(), subject[1:])
+					// Send Webhook to discord endpoint
+					sendWebHook(os.Getenv("FOM_WEBHOOK_COURSES"), "FOM-Notify", "", subject, "Zoom Notification", s.Text())
 				}
 			}
 		})
@@ -186,13 +187,8 @@ func parseMessageHTML(i int, s *goquery.Selection) {
 			body = richBody
 		}
 
-		msg := blackBoardMsg{
-			Title:   title,
-			Date:    date,
-			Message: body,
-			Link:    link,
-		}
-		msgQueue = append(msgQueue, msg) // Add Item to queue to be parsed
+		// Send Notification to discord
+		sendWebHook(os.Getenv("FOM_WEBHOOK"), "FOM-OC", title, link, "Am "+date+":", body)
 		return
 	}
 	log.Print("Couldn't find any new articles. \n")

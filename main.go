@@ -83,8 +83,6 @@ func getLatestOCNews() {
 	parseBlackBoardData(news)
 	// Check notification for courses
 	getCourseNotification()
-	// Working on the Messages and sending to Discord
-	sendQueueMessages()
 }
 
 // 	prints the msg to stdout for debug purposes
