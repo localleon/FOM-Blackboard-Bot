@@ -1,7 +1,6 @@
 # FOM-Blackboard 
 This Discord Bot can read from the Online-Campus Blackboard and write it's messages to an channel.
 
-
 This is the basic application Design
 ```
 +-------------------------------------------------+
@@ -20,13 +19,11 @@ This is the basic application Design
 +--------------+  Write Channel +-----------------+
 ```
 
-## Invite Link for the Bot
-https://discord.com/oauth2/authorize?client_id=780869817921962027&scope=bot
-- Bot is currently set to public. Needs to be changed after it's deployed on the Discord Server
+We are using Webhooks to write our information into different channels. Currently we read out **Blackboard Messages** and **Zoom Notifications**. 
 
 ## Discord Server Config
 - Create a channel #blackboard and create a webhook for `FOM_WEBHOOK` env-var
-- Create a permission role for the bot. The bot needs to have write/read permissions for the channel. Permission Integer is 190464
+- Create a channel #zoom-notify and create a webhook for `FOM_WEBHOOK_COURSES` env-var
 
 ## Application Config 
 - Use the env-Vars `FOM_USER` and `FOM_PWD` to set your login credentials. The programm needs a valid OC Login to authenticate against the Blackboard API. The Credentials must be encoded via base64 to stop Shoulder-Surfers from copying your valuable Online-Campus Credentials
@@ -39,7 +36,6 @@ FOM_WEBHOOK | Blackboard Webhook
 FOM_USER | Base64 User
 FOM_WPD | Base64 Password
 
-
 ## Reverse Engineering Shizzle
 In the /samples Folder some responses from the OC are saved. These can be used for testing and parsing
 
@@ -48,3 +44,6 @@ In the /samples Folder some responses from the OC are saved. These can be used f
 - Perform Login on Login.do with Username and Shit (you get a session cookie)
 - Append session cookie and then perform get requests
 
+## ToDo
+- Parse non-Zoom Conference Invites from private messages
+- Multi-Tenant Configuration for BWIT-Students
