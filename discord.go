@@ -44,11 +44,8 @@ type Webhook struct {
 	Embeds    []Embeds `json:"embeds"`
 }
 
-func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
-	c := &http.Client{}
-
+func constructWebHook(hookName, title, eURL, fieldName, msg string) []byte {
 	// Construct Webhook
-
 	e := Embeds{
 		Title:       title,
 		Description: eURL,
@@ -71,8 +68,15 @@ func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
 	if err != nil {
 		log.Println("Couldn't parse struct into WebHook Request")
 	}
+	return webhookReq
+}
 
-	req, rErr := http.NewRequest("POST", hook, bytes.NewBuffer(webhookReq))
+func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
+	c := &http.Client{}
+
+	data := constructWebHook(hookName, title, eURL, fieldName, msg)
+
+	req, rErr := http.NewRequest("POST", hook, bytes.NewBuffer(data))
 	if rErr != nil {
 		log.Println("Couldn't create discord webhook request out of data")
 	}
@@ -85,7 +89,7 @@ func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
 
 	// Check if we got a valid response
 	if res.StatusCode >= 200 && res.StatusCode <= 204 {
-		log.Println("Error: Got " + string(res.StatusCode) + "from Discord Server")
+		log.Println("Got invalid HTTP StatusCode from Discord:", res.StatusCode)
 	}
 
 	defer res.Body.Close()

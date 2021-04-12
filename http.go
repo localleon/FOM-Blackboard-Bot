@@ -123,7 +123,7 @@ func getLoginCookie(user, pwd string, ctx []*http.Cookie) []*http.Cookie {
 	return nil
 }
 
-func getLoginContext() []*http.Cookie {
+func createLoginContext() []*http.Cookie {
 	params := "/nfcampus/Login.do"
 	url := endpoint + params
 	// Prepare new HTTP request

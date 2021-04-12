@@ -21,6 +21,7 @@ const endpoint string = "https://campus.bildungscentrum.de"
 
 func main() {
 	log.Println("Starting FOM-OC Discord Bot")
+	// Check if Env-Vars are present
 	checkEnvVars()
 
 	// HTTP Client Setup with global cookie storage
@@ -63,24 +64,28 @@ func checkEnvVars() {
 
 func getLatestOCNews() {
 	log.Print("Requesting new FOM-OC Blackboard Data")
-	// Authenticate Session
-	envUser, uErr := base64.StdEncoding.DecodeString(os.Getenv("FOM_USER"))
-	envPwd, pErr := base64.StdEncoding.DecodeString(os.Getenv("FOM_PWD"))
-	if uErr != nil || pErr != nil {
-		log.Fatalf("Error decoding base64 values of user/password values")
-	}
-
-	username := string(envUser)
-	password := string(envPwd)
 
 	// Decode Credentials to cleartext
-	context := getLoginContext()
-	getLoginCookie(username, password, context)
+	context := createLoginContext()
+	user, pwd := createLoginCredentials("FOM_USER", "FOM_PWD")
+
+	getLoginCookie(user, pwd, context)
 	// Parsing new OC-Messages
 	news := getDashboardBlackboard()
 	parseBlackBoardData(news)
 	// // Check notification for courses
-	// getCourseNotification()
+	getCourseNotification()
+}
+
+//createLoginCredentials reads the ENV-Vars out and decodes the credentials from base64
+func createLoginCredentials(userEnv, pwdEnv string) (string, string) {
+	envUser, uErr := base64.StdEncoding.DecodeString(os.Getenv(userEnv))
+	envPwd, pErr := base64.StdEncoding.DecodeString(os.Getenv(pwdEnv))
+	if uErr != nil || pErr != nil {
+		log.Fatalf("Error decoding base64 values of user/password values")
+	}
+
+	return string(envUser), string(envPwd)
 }
 
 // 	prints the msg to stdout for debug purposes

@@ -50,46 +50,44 @@ func parsePrivateMessagesSection(data string) {
 				}
 			}
 
-			if dateMatch { // Parse todays message for notifications
+			// Parse todays message for notifications, check if columm is right. Test if timeWindow matches
+			if dateMatch && h == 5 && isInTimeWindow(day) {
 
-				if h == 5 {
-					// Check Timeslot
-					loc, _ := time.LoadLocation("Europe/Berlin")
-					hour := time.Now().In(loc)
+				// Check if subject is right
+				if strings.Contains(row.Text(), "Ihre Videokonferenz startet in Kuerze um") {
+					subject := row.Text()
+					subject = strings.ReplaceAll(subject, "'", "")
+					subject = strings.TrimSpace(subject)
 
-					// Time windows where a notification could be sent , UTC time in strings is converted to CET
-					t1, _ := time.Parse("02.01.2006 15:04:05", day+" 06:30:00")
-					t2, _ := time.Parse("02.01.2006 15:04:05", day+" 07:30:00")
-					t3, _ := time.Parse("02.01.2006 15:04:05", day+" 10:30:00")
-					t4, _ := time.Parse("02.01.2006 15:04:05", day+" 11:30:00")
+					// Check if message was already sent out
+					if !contains(notificationBuffer, subject) {
+						notificationBuffer = append(notificationBuffer, subject)
+						msgLink, _ := row.Find("a").Attr("href")
 
-					// Check if our message is in window
-					if hour.After(t1.In(loc)) && hour.Before(t2.In(loc)) || hour.After(t3.In(loc)) && hour.Before(t4.In(loc)) {
-
-						// Check if subject is right
-						if strings.Contains(row.Text(), "Ihre Videokonferenz startet in Kuerze um") {
-							subject := row.Text()
-							subject = strings.ReplaceAll(subject, "'", "")
-							subject = strings.TrimSpace(subject)
-
-							// Check if message was already sent out
-							if !contains(notificationBuffer, subject) {
-								notificationBuffer = append(notificationBuffer, subject)
-								msgLink, _ := row.Find("a").Attr("href")
-
-								log.Println("Sending Discord Notification with link")
-								parseNotification(subject, msgLink)
-							} else {
-								log.Println("Matching notification found, we already sent that one! aborting...")
-							}
-						}
+						log.Println("Sending Discord Notification with link")
+						parseNotification(subject, msgLink)
 					} else {
-						log.Println("Notification is out of timewindow, aborting")
+						log.Println("Matching notification found, we already sent that one! aborting...")
 					}
 				}
+			} else {
+				log.Println("Notification is out of timewindow, aborting")
 			}
 		})
 	})
+}
+
+func isInTimeWindow(day string) bool {
+	loc, _ := time.LoadLocation("Europe/Berlin")
+	hour := time.Now().In(loc)
+
+	// Time windows where a notification could be sent , UTC time in strings is converted to CET
+	t1, _ := time.Parse("02.01.2006 15:04:05", day+" 06:30:00")
+	t2, _ := time.Parse("02.01.2006 15:04:05", day+" 07:30:00")
+	t3, _ := time.Parse("02.01.2006 15:04:05", day+" 10:30:00")
+	t4, _ := time.Parse("02.01.2006 15:04:05", day+" 11:30:00")
+	// Check if our message is in window
+	return hour.After(t1.In(loc)) && hour.Before(t2.In(loc)) || hour.After(t3.In(loc)) && hour.Before(t4.In(loc))
 }
 
 // contains checks if a string is present in a slice
@@ -108,6 +106,9 @@ func parseNotification(subject, notfiyLink string) {
 
 	// Prepare new HTTP request
 	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 	request.Header.Add("Content-Type", "charset=UTF-8")
 
 	// Send HTTP request and move the response to the variable
