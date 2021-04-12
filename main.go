@@ -19,8 +19,6 @@ var client *http.Client
 
 const endpoint string = "https://campus.bildungscentrum.de"
 
-var msgQueue []blackBoardMsg // Global Queue for storing parsed Items
-
 func main() {
 	log.Println("Starting FOM-OC Discord Bot")
 	checkEnvVars()
@@ -30,6 +28,8 @@ func main() {
 	client = &http.Client{
 		Jar: jar,
 	}
+
+	sendWebHook(os.Getenv("FOM_WEBHOOK"), "FOM-Notify", "test", "test", "Test", "Testtext")
 
 	// Setup execution every 30m for periodicly downloading the lastest OC-News
 	getLatestOCNews()
@@ -81,8 +81,8 @@ func getLatestOCNews() {
 	// Parsing new OC-Messages
 	news := getDashboardBlackboard()
 	parseBlackBoardData(news)
-	// Check notification for courses
-	getCourseNotification()
+	// // Check notification for courses
+	// getCourseNotification()
 }
 
 // 	prints the msg to stdout for debug purposes

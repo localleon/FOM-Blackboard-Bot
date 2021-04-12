@@ -27,8 +27,9 @@ type Footer struct {
 
 //Embeds is discord any embedded content
 type Embeds struct {
-	Title     string    `json:"title"`
-	URL       string    `json:"url"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	// URL       string    `json:"url"`
 	Color     int       `json:"color"`
 	Timestamp string    `json:"timestamp"`
 	Thumbnail Thumbnail `json:"thumbnail"`
@@ -49,9 +50,9 @@ func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
 	// Construct Webhook
 
 	e := Embeds{
-		Title: title,
-		URL:   eURL,
-		Color: 3066993, // Green
+		Title:       title,
+		Description: eURL,
+		Color:       3066993, // Green
 		Fields: []Fields{
 			{
 				Name:   fieldName,
@@ -81,5 +82,6 @@ func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
 	if qErr != nil {
 		log.Println("Error while sending http discord webhook")
 	}
+
 	defer res.Body.Close()
 }
