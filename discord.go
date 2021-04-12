@@ -83,5 +83,10 @@ func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
 		log.Println("Error while sending http discord webhook")
 	}
 
+	// Check if we got a valid response
+	if res.StatusCode >= 200 && res.StatusCode <= 204 {
+		log.Println("Error: Got " + string(res.StatusCode) + "from Discord Server")
+	}
+
 	defer res.Body.Close()
 }

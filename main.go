@@ -29,8 +29,6 @@ func main() {
 		Jar: jar,
 	}
 
-	sendWebHook(os.Getenv("FOM_WEBHOOK"), "FOM-Notify", "test", "test", "Test", "Testtext")
-
 	// Setup execution every 30m for periodicly downloading the lastest OC-News
 	getLatestOCNews()
 	c := cron.New()
