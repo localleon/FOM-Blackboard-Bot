@@ -9,6 +9,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/robfig/cron"
 )
@@ -16,6 +17,8 @@ import (
 var client *http.Client
 
 const endpoint string = "https://campus.bildungscentrum.de"
+
+var loc *time.Location
 
 func main() {
 	log.Println("Starting FOM-OC Discord Bot")
@@ -28,10 +31,13 @@ func main() {
 		Jar: jar,
 	}
 
-	// Setup execution every 30m for periodicly downloading the lastest OC-News
-	getLatestOCNews()
+	// Timezone Setup
+	loc, _ = time.LoadLocation("Europe/Berlin")
+
+	// Setup execution every 15m for periodicly downloading the lastest OC-News
+	processOCData()
 	c := cron.New()
-	cErr := c.AddFunc("@every 15m", getLatestOCNews)
+	cErr := c.AddFunc("@every 15m", processOCData)
 	if cErr != nil {
 		log.Println("Can't setup cron handler")
 		os.Exit(5)
@@ -60,19 +66,28 @@ func checkEnvVars() {
 	}
 }
 
-func getLatestOCNews() {
-	log.Print("Requesting new FOM-OC Blackboard Data")
-
-	// Decode Credentials to cleartext
+// processOCData parses Blackboard News and Course notification data
+func processOCData() {
+	// Create Authorization Context
 	context := createLoginContext()
 	user, pwd := createLoginCredentials("FOM_USER", "FOM_PWD")
-
 	getLoginCookie(user, pwd, context)
-	// Parsing new OC-Messages
-	news := getDashboardBlackboard()
-	parseBlackBoardData(news)
+
+	// Parsing new Blackboard Messages
+	go func() {
+		log.Println("Requesting Blackboard Data")
+		news := getDashboardBlackboard()
+		parseBlackBoardData(news)
+		log.Println("Finished working on Blackboard Data")
+	}()
+
 	// // Check notification for courses
-	getCourseNotification()
+	go func() {
+		log.Println("Requesting Course Notifications")
+		getCourseNotification()
+		log.Println("Finished working on Course Notifications")
+	}()
+
 }
 
 //createLoginCredentials reads the ENV-Vars out and decodes the credentials from base64

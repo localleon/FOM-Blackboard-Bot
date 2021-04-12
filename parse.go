@@ -13,64 +13,86 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-var notificationBuffer []string // saves sent notifications on runtime. The notification feature makes the application somewhat stateful because we need to remeber sent messages
+var notifyBuffer []string // saves sent notifications on runtime. The notification feature makes the application somewhat stateful because we need to remeber sent messages
 
-func parsePrivateMessagesSection(data string) {
+type PrivateMessage struct {
+	Subject    string
+	Date       string
+	NotifyDate time.Time
+	Link       string
+	Text       string
+}
 
-	// Create HTML Document
-	output := html.UnescapeString(data)
-	html := replaceUmlauts(output)
-	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+func processOCMailbox(doc *goquery.Document) {
+	msgs := extractMessagesFromNode(doc)
 
-	if err != nil {
-		log.Println("Couldn't parse html of Notifications")
-		return
+	for _, m := range msgs {
+		// Check if we already sent the notification
+
+		if !contains(notifyBuffer, m.Subject) {
+			notifyBuffer = append(notifyBuffer, m.Subject)
+		} else {
+			processPrivateMessage(m) // Send Discord Notification out
+		}
 	}
+}
+
+//extractMessagesFromNode extracts all Zoom-Notify messages from the HTML-Node
+func extractMessagesFromNode(doc *goquery.Document) []PrivateMessage {
+	found := []PrivateMessage{}
+
 	doc.Find("tr").Each(func(i int, s *goquery.Selection) {
 		// Keep date/time for element
 		dateMatch := false
 		day := ""
 
 		s.Find("td").Each(func(h int, row *goquery.Selection) {
-			if h == 2 { // Check for todays message
-
-				loc, _ := time.LoadLocation("Europe/Berlin")
+			switch h {
+			case 2: // Check if Notification is from today
 				day = time.Now().In(loc).Format("02.01.2006")
 
 				if strings.Contains(row.Text(), day) {
 					dateMatch = true
 				}
-			}
+			case 5: // Extract Notify Date
+				rowT := row.Text()
+				headerDate := extractDateFromHeading(rowT)
 
-			// Parse todays message for notifications, check if columm is right. Test if timeWindow matches
-			if dateMatch && h == 5 && isInTimeWindow(day) {
+				// Does the heading match all checks?
+				if dateMatch && isInTimeWindow(day) && isZoomNotification(rowT) {
 
-				// Check if subject is right
-				if strings.Contains(row.Text(), "Ihre Videokonferenz startet in Kuerze um") {
-					subject := row.Text()
-					subject = strings.ReplaceAll(subject, "'", "")
+					// Extract Data
+					subject := strings.ReplaceAll(rowT, "'", "")
 					subject = strings.TrimSpace(subject)
+					msgLink, _ := row.Find("a").Attr("href")
 
-					// Check if message was already sent out
-					if !contains(notificationBuffer, subject) {
-						notificationBuffer = append(notificationBuffer, subject)
-						msgLink, _ := row.Find("a").Attr("href")
-
-						log.Println("Sending Discord Notification with link")
-						parseNotification(subject, msgLink)
-					} else {
-						log.Println("Matching notification found, we already sent that one! aborting...")
+					// Add message to all found messages
+					msg := PrivateMessage{
+						Subject:    subject,
+						Date:       day,
+						NotifyDate: headerDate,
+						Link:       msgLink,
 					}
+					found = append(found, msg)
 				}
-			} else {
-				log.Println("Notification is out of timewindow, aborting")
 			}
 		})
 	})
+
+	return found
+}
+
+func extractDateFromHeading(heading string) time.Time {
+	// TODO: Add function
+	// fmt.Println(heading) //
+	return time.Now()
+}
+
+func isZoomNotification(heading string) bool {
+	return strings.Contains(heading, "Ihre Videokonferenz startet in Kuerze um")
 }
 
 func isInTimeWindow(day string) bool {
-	loc, _ := time.LoadLocation("Europe/Berlin")
 	hour := time.Now().In(loc)
 
 	// Time windows where a notification could be sent , UTC time in strings is converted to CET
@@ -93,8 +115,8 @@ func contains(s []string, str string) bool {
 	return false
 }
 
-func parseNotification(subject, notfiyLink string) {
-	url := endpoint + notfiyLink
+func processPrivateMessage(msg PrivateMessage) {
+	url := endpoint + msg.Link
 
 	// Prepare new HTTP request
 	request, err := http.NewRequest("GET", url, nil)
@@ -126,7 +148,7 @@ func parseNotification(subject, notfiyLink string) {
 				r := regexp.MustCompile("^http|https+://*$") // This matches a line that contains only a link
 				if r.Match([]byte(s.Text())) {
 					// Send Webhook to discord endpoint
-					sendWebHook(os.Getenv("FOM_WEBHOOK_COURSES"), "FOM-Notify", "", subject, "Zoom Notification", s.Text())
+					sendWebHook(os.Getenv("FOM_WEBHOOK_COURSES"), "FOM-Notify", "", msg.Subject, "Zoom Notification", s.Text())
 				}
 			}
 		})
@@ -139,18 +161,19 @@ func parseBlackBoardData(d blackboardRes) {
 		output := html.UnescapeString(d.HTML)
 		html := replaceUmlauts(output)
 
+		// Parse HTML
 		doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
-
 		if err != nil {
 			log.Println("Couldn't parse html of BlackBoardData")
 			return
 		}
-		// Find the news  items
+
+		// Find the news items
 		doc.Find("#cell_blackboardtype1").Each(func(i int, s *goquery.Selection) {
 			// For each item found, parse the message
 			s.Find("li").Each(parseMessageHTML)
 		})
-		// Find the news  items
+		// Find the news items
 		doc.Find("#cell_mPrio").Each(func(i int, s *goquery.Selection) {
 			// For each item found, parse the message
 			s.Find("li").Each(parseMessageHTML)
@@ -165,12 +188,12 @@ func parseMessageHTML(i int, s *goquery.Selection) {
 	if !s.Is(":empty") {
 		log.Println("Got new Data in Blackboard. Starting parsing process..... ")
 		// Find all Values in HTML Doc
-		title := s.Find(".titel").Text()
+		Subject := s.Find(".titel").Text()
 		date := s.Find(".date").Text()
 		body := s.Find(".abstract").Text()
 		link, state := s.Find(".abstract").Find("a").Attr("href")
 		if !state {
-			log.Println("Message", title, "does not contain an Hyperlink for more information")
+			log.Println("Message", Subject, "does not contain an Hyperlink for more information")
 		}
 
 		// Cleanup and create message object
@@ -181,7 +204,7 @@ func parseMessageHTML(i int, s *goquery.Selection) {
 		}
 
 		// Send Notification to discord
-		sendWebHook(os.Getenv("FOM_WEBHOOK"), "FOM-OC", title, link, "Am "+date+":", body)
+		sendWebHook(os.Getenv("FOM_WEBHOOK"), "FOM-OC", Subject, link, "Am "+date+":", body)
 		return
 	}
 	log.Print("Couldn't find any new articles. \n")
@@ -222,4 +245,18 @@ func parseMessageBodyFromRef(ref string) string {
 	// Cleanup first few D
 	msgString = strings.Replace(msgString, "\n", "", 4)
 	return msgString
+}
+
+// stringToHMTL converts a string to a parsable goquery Document
+func stringToHTML(data string) *goquery.Document {
+	// Create HTML Document
+	output := html.UnescapeString(data)
+	html := replaceUmlauts(output)
+	doc, err := goquery.NewDocumentFromReader(strings.NewReader(html))
+
+	if err != nil {
+		log.Println("Couldn't parse html of Notifications")
+		return nil
+	}
+	return doc
 }

@@ -50,7 +50,6 @@ func getDashboardBlackboard() blackboardRes {
 }
 
 func getCourseNotification() {
-	log.Println("Requesting private Message List")
 	params := "/nfcampus/Inbox.do"
 	url := endpoint + params
 
@@ -73,8 +72,10 @@ func getCourseNotification() {
 		if errB != nil {
 			log.Println("Error decoding Body of Notifications")
 		}
+
 		// Check if there's a Notification for upcoming lessons
-		parsePrivateMessagesSection(string(data))
+		doc := stringToHTML(string(data))
+		processOCMailbox(doc)
 		return
 	}
 	log.Println("Error while getting Dashboard", response.Status)
