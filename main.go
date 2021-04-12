@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/base64"
-	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -86,30 +84,6 @@ func createLoginCredentials(userEnv, pwdEnv string) (string, string) {
 	}
 
 	return string(envUser), string(envPwd)
-}
-
-// 	prints the msg to stdout for debug purposes
-func printBlackboardMSG(msg blackBoardMsg) {
-	fmt.Println("----------------------------")
-	fmt.Println("Working on:")
-	fmt.Println("- Title:", msg.Title)
-	fmt.Println("- Posted on:", msg.Date)
-	fmt.Println("- Link:", msg.Link)
-	fmt.Println(msg.Message)
-}
-
-//loadSampleBlackboards loads an API response from a local file so we dont generate to much network traffic while developing
-func loadSampleBlackboard(path string) blackboardRes {
-	// load parse.html
-	data, _ := ioutil.ReadFile(path)
-
-	b := blackboardRes{
-		Status:      200,
-		NewElements: 1,
-		TotalRows:   1,
-		HTML:        string(data),
-	}
-	return b
 }
 
 func replaceUmlauts(s string) string {

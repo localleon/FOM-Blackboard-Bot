@@ -13,14 +13,6 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-//blackBoardMsg contains a parsed OC-Campus Message
-type blackBoardMsg struct {
-	Title   string
-	Date    string
-	Message string
-	Link    string
-}
-
 var notificationBuffer []string // saves sent notifications on runtime. The notification feature makes the application somewhat stateful because we need to remeber sent messages
 
 func parsePrivateMessagesSection(data string) {

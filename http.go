@@ -57,6 +57,9 @@ func getCourseNotification() {
 	// Prepare new HTTP request
 	request, err := http.NewRequest("GET", url, nil)
 	request.Header.Add("Content-Type", "charset=UTF-8")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// Send HTTP request and move the response to the variable
 	response, err := client.Do(request)
