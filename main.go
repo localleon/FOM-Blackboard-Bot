@@ -74,19 +74,17 @@ func processOCData() {
 	getLoginCookie(user, pwd, context)
 
 	// Parsing new Blackboard Messages
-	go func() {
-		log.Println("Requesting Blackboard Data")
-		news := getDashboardBlackboard()
-		parseBlackBoardData(news)
-		log.Println("Finished working on Blackboard Data")
-	}()
+	log.Println("Requesting Blackboard Data")
+	news := getDashboardBlackboard()
+	parseBlackBoardData(news)
+	log.Println("Finished working on Blackboard Data")
 
-	// // Check notification for courses
-	go func() {
-		log.Println("Requesting Course Notifications")
-		getCourseNotification()
-		log.Println("Finished working on Course Notifications")
-	}()
+	// // // Check notification for courses
+	// go func() {
+	// 	log.Println("Requesting Course Notifications")
+	// 	getCourseNotification()
+	// 	log.Println("Finished working on Course Notifications")
+	// }()
 
 }
 
