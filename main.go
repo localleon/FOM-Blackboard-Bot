@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
-	"time"
 
 	"github.com/robfig/cron"
 )
@@ -17,8 +16,6 @@ import (
 var client *http.Client
 
 const endpoint string = "https://campus.bildungscentrum.de"
-
-var loc *time.Location
 
 func main() {
 	log.Println("Starting FOM-OC Discord Bot")
@@ -30,9 +27,6 @@ func main() {
 	client = &http.Client{
 		Jar: jar,
 	}
-
-	// Timezone Setup
-	loc, _ = time.LoadLocation("Europe/Berlin")
 
 	// Setup execution every 15m for periodicly downloading the lastest OC-News
 	processOCData()
@@ -77,14 +71,8 @@ func processOCData() {
 	log.Println("Requesting Blackboard Data")
 	news := getDashboardBlackboard()
 	parseBlackBoardData(news)
-	log.Println("Finished working on Blackboard Data")
 
-	// // // Check notification for courses
-	// go func() {
-	// 	log.Println("Requesting Course Notifications")
-	// 	getCourseNotification()
-	// 	log.Println("Finished working on Course Notifications")
-	// }()
+	log.Println("Finished working on Blackboard Data")
 
 }
 
