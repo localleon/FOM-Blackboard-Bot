@@ -72,7 +72,6 @@ func processOCData() {
 	parseBlackBoardData(news)
 
 	log.Println("Finished working on Blackboard Data")
-
 }
 
 func replaceUmlauts(s string) string {

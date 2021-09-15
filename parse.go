@@ -49,11 +49,11 @@ func parseBlackBoardData(d blackboardRes) {
 func parseMessageHTML(i int, s *goquery.Selection) {
 	// Only parse msgs with content in it
 	if !s.Is(":empty") {
-		log.Println("Got new Data in Blackboard. Starting parsing process..... ")
 		// Find all Values in HTML Doc
 		Subject := s.Find(".titel").Text()
 		date := s.Find(".date").Text()
 		body := s.Find(".abstract").Text()
+		log.Println("Got new Data in Blackboard. Article -> ", Subject)
 		link, state := s.Find(".abstract").Find("a").Attr("href")
 		if !state {
 			log.Println("Message", Subject, "does not contain an Hyperlink for more information")

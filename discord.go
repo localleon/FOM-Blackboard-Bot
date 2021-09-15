@@ -88,9 +88,13 @@ func sendWebHook(hook, hookName, title, eURL, fieldName, msg string) {
 	}
 
 	// Check if we got a valid response
-	if res.StatusCode >= 200 && res.StatusCode <= 204 {
+	if res.StatusCode >= 200 && res.StatusCode < 204 {
 		log.Println("Got invalid HTTP StatusCode from Discord:", res.StatusCode)
 	}
+	// Convert response to string
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(res.Body)
+	log.Println("Response: ", buf.String())
 
 	defer res.Body.Close()
 }
