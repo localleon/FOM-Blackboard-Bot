@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"log"
 	"net/http"
 	"net/http/cookiejar"
@@ -64,7 +63,7 @@ func checkEnvVars() {
 func processOCData() {
 	// Create Authorization Context
 	context := createLoginContext()
-	user, pwd := createLoginCredentials("FOM_USER", "FOM_PWD")
+	user, pwd := os.Getenv("FOM_USER"), os.Getenv("FOM_PWD")
 	getLoginCookie(user, pwd, context)
 
 	// Parsing new Blackboard Messages
@@ -74,17 +73,6 @@ func processOCData() {
 
 	log.Println("Finished working on Blackboard Data")
 
-}
-
-//createLoginCredentials reads the ENV-Vars out and decodes the credentials from base64
-func createLoginCredentials(userEnv, pwdEnv string) (string, string) {
-	envUser, uErr := base64.StdEncoding.DecodeString(os.Getenv(userEnv))
-	envPwd, pErr := base64.StdEncoding.DecodeString(os.Getenv(pwdEnv))
-	if uErr != nil || pErr != nil {
-		log.Fatalf("Error decoding base64 values of user/password values")
-	}
-
-	return string(envUser), string(envPwd)
 }
 
 func replaceUmlauts(s string) string {
