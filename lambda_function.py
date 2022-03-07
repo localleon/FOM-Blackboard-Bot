@@ -1,30 +1,51 @@
+from wsgiref import headers
 import requests
 import os
 from bs4 import BeautifulSoup
 from datetime import datetime
 from bs4.element import Comment
+import json
 
 
-def handler(event, context):
+def lambda_handler(event, context):
     today = datetime.today().date()
 
     print(f"Creating OC HTTP-Session and parsing Blackboard HTML")
     session = create_oc_session()
     posts = get_blackboard_posts(session)
-    posts[9]["date"] = datetime.today().date()
-
+    print("Found posts:",posts)
+    
     # Only select posts which were created today
     new_posts = [
         get_single_post(session=session, post=p) for p in posts if p["date"] == today
     ]
 
     print(f"Sending {len(new_posts)} new posts to discord channel")
-    [send_discord_message(text) for text in new_posts]
+    resp_codes = [send_discord_message(post=post,session=session) for post in new_posts]
+    return resp_codes
 
+def send_discord_message(post,session):
+    webhook = os.environ["DISCORD_CHANNEL"]
 
-def send_discord_message(text):
-    print(text)
+    message = {
+        "username" : "FOM-Blackboard",
+        "embeds" : [
+            {
+                "title" : post['title'],
+                "url" : "https://campus.bildungscentrum.de" + post['link'],
+                "description" : post['text'],
+                "color" : "3066993"
+            }
+        ]
+    }
 
+    resp = session.post(webhook,data=json.dumps(message),headers={'content-type' : 'application/json'})
+    if (resp.status_code) == 204:
+        print("Webhook executed successfully")
+    else: 
+        print("Something went wrong with the webhook",resp.status_code)
+        print(resp.text)
+    return resp.status_code
 
 def get_single_post(session, post):
     single_post = session.get(
@@ -34,12 +55,16 @@ def get_single_post(session, post):
     soup = BeautifulSoup(single_post, "html.parser")
 
     content = soup.find("div", {"id": "content"})
-    return " ".join(
+
+    post['title'] = content.find("b").text
+
+    post['text'] = " ".join(
         text_from_html(content)
         .strip("| Meine Hochschule")
         .strip("zurück zur Übersicht")
         .split()
     )
+    return post
 
 
 def text_from_html(soup):

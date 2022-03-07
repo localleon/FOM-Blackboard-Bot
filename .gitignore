@@ -1,3 +1,7 @@
 # virtualenv 
-pylambda/
+.env/
 __pycache__/
+
+
+# deployment 
+*.zip
